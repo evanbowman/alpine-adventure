@@ -26,4 +26,5 @@ private:
     std::list<ObjectPtr> gameObjects_;
     sf::Shader lightingShader;
     sf::Texture testFace_, testShadow_;
+    sf::Texture vignette_;
 };

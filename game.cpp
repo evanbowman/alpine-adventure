@@ -5,7 +5,7 @@ static const auto desktopMode = sf::VideoMode::getDesktopMode();
 
 
 Game::Game() : window_(desktopMode, "Test", sf::Style::Fullscreen),
-               camera_({desktopMode.width / 3.f, desktopMode.height / 3.f},
+               camera_({desktopMode.width / 2.f, desktopMode.height / 2.f},
                        {desktopMode.width, desktopMode.height}) {
     shadowMap_.create(desktopMode.width, desktopMode.height);
     world_.create(desktopMode.width, desktopMode.height);
@@ -17,10 +17,12 @@ Game::Game() : window_(desktopMode, "Test", sf::Style::Fullscreen),
     gameObjects_.push_back(obj);
     window_.setVerticalSyncEnabled(true);
     window_.setFramerateLimit(60);
+    window_.setMouseCursorVisible(false);
     if (not sf::Shader::isAvailable()) {
         throw std::runtime_error("unable to run without shaders");
     }
     lightingShader.loadFromFile("lighting.vert", "lighting.frag");
+    vignette_.loadFromFile("vignette.png");
 }
 
 
@@ -66,11 +68,17 @@ void Game::display() {
 
     window_.clear();
     window_.setView(camera_.getWindowView());
-
+    sf::Sprite vignette(vignette_);
+    const auto windowSize = window_.getSize();
+    vignette.setScale(windowSize.x / 450.f, windowSize.y / 450.f);
+    vignette.setOrigin(225, 225);
+    vignette.setPosition(camera_.getWindowView().getCenter());
+    vignette.setColor({255, 255, 255, 181});
     sf::Sprite shadowMapSprite(shadowMap_.getTexture());
     lightingShader.setUniform("shadowMap", sf::Shader::CurrentTexture);
     lightingShader.setUniform("world", world_.getTexture());
     window_.draw(shadowMapSprite, &lightingShader);
+    window_.draw(vignette);
     window_.display();
 }
 

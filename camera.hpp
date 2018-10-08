@@ -17,13 +17,9 @@ public:
 
     void setTarget(std::shared_ptr<Object> target);
 
-    const sf::View& getWindowView() const {
-        return windowView_;
-    }
+    const sf::View& getWindowView() const;
 
-    const sf::View& getOverworldView() const {
-        return overworldView_;
-    }
+    const sf::View& getOverworldView() const;
 
 private:
     sf::View overworldView_;
