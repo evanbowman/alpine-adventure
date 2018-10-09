@@ -5,6 +5,7 @@ project(alpine)
 add_executable(alpine
   main.cpp
   game.cpp
+  script.cpp
   camera.cpp)
 
 target_compile_options(alpine
@@ -12,3 +13,5 @@ target_compile_options(alpine
   PRIVATE "-std=c++11")
 
 target_link_libraries(alpine "-framework sfml-window -framework sfml-graphics -framework sfml-system -framework sfml-audio")
+
+target_link_libraries(alpine "chibi-scheme")

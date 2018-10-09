@@ -7,24 +7,30 @@
 #include "camera.hpp"
 #include "object.hpp"
 
+namespace Game {
 
-class Game {
-public:
-    Game();
+    struct Context;
+    struct ContextDeleter { void operator()(Context *p); };
+    using ContextPtr = std::unique_ptr<Context, ContextDeleter>;
 
-    void update(Microseconds delta);
+
+    ContextPtr initialize();
+
+
+    void bind(Context& context);
+
+
+    void runUpdateLoop();
+
+
+    void update();
+
 
     void display();
 
-    bool isRunning() const;
 
-private:
-    sf::RenderWindow window_;
-    sf::RenderTexture shadowMap_;
-    sf::RenderTexture world_;
-    Camera camera_;
-    std::list<ObjectPtr> gameObjects_;
-    sf::Shader lightingShader;
-    sf::Texture testFace_, testShadow_;
-    sf::Texture vignette_;
-};
+    bool isRunning();
+
+
+    ObjectPtr makeObject();
+}
