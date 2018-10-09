@@ -3,11 +3,13 @@
 #include <SFML/Graphics.hpp>
 #include <memory>
 
+// FIXME: all this stuff needs to be better organized
 
-class Object {
+
+class GraphicsComponent {
 public:
-    Object(const sf::Texture& faceTexture,
-           const sf::Texture& shadowTexture) :
+    GraphicsComponent(const sf::Texture& faceTexture,
+                      const sf::Texture& shadowTexture) :
         faceSprite_(faceTexture),
         shadowSprite_(shadowTexture) {}
 
@@ -24,13 +26,35 @@ public:
         shadowSprite_.setPosition(pos);
     }
 
-    sf::Vector2f getPosition() {
-        return faceSprite_.getPosition();
-    }
-
 private:
     sf::Sprite faceSprite_;
     sf::Sprite shadowSprite_;
+};
+
+
+class Object {
+public:
+    Object() {}
+
+    void setPosition(const sf::Vector2f& pos) {
+        position_ = pos;
+    }
+
+    sf::Vector2f getPosition() {
+        return position_;
+    }
+
+    void setGraphicsComponent(std::unique_ptr<GraphicsComponent> gfx) {
+        gfx_ = std::move(gfx);
+    }
+
+    GraphicsComponent* getGraphicsComponent() {
+        return gfx_.get();
+    }
+
+private:
+    sf::Vector2f position_;
+    std::unique_ptr<GraphicsComponent> gfx_;
 };
 
 using ObjectPtr = std::shared_ptr<Object>;

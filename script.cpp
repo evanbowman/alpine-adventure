@@ -57,3 +57,11 @@ void ScriptEngine::exportFunction(const String& sym,
                         argc,
                         proc);
 }
+
+
+void ScriptEngine::setGlobal(const String& sym, unsigned value) {
+    sexp_env_define(state_->ctx,
+                    state_->env,
+                    sexp_intern(state_->ctx, sym.c_str(), sym.length()),
+                    sexp_make_integer(state_->ctx, value));
+}

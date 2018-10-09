@@ -18,6 +18,8 @@ public:
                         int argc,
                         void*(*proc)());
 
+    void setGlobal(const String& sym, unsigned value);
+
 private:
     struct State;
 
