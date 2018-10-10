@@ -2,9 +2,16 @@
 ;;; Entry point for the program
 ;;;
 
+(load "repl.scm")
+
+(define test-txtr (Game_createTexture "Sprite-0001.png"))
+(display test-txtr)
 
 (define test-obj (Game_makeObject))
-(Object_move test-obj -500.0 0.0)
+(Object_setFace test-obj)
+(Object_setShadow test-obj)
+
+(Game_setCameraTarget test-obj)
 
 
 (define (update-game)

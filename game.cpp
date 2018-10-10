@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <thread>
+#include <future>
 
 
 template<typename T, typename... Args>
@@ -12,10 +13,45 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 }
 
 
-
 namespace Game {
 
     static Context* context;
+
+
+    class TextureDB {
+    public:
+        std::future<sf::Texture*> loadTexture(const std::string& name) {
+            std::promise<sf::Texture*> promise;
+            auto future = promise.get_future();
+            {
+                std::lock_guard<std::mutex> guard(requestsMutex_);
+                requests_.push_back({name, std::move(promise)});
+            }
+            return future;
+        }
+
+        void update() {
+            std::lock_guard<std::mutex> guard(requestsMutex_);
+            for (auto& req : requests_) {
+                auto inserted = textures_.insert({req.first, sf::Texture{}});
+                if (inserted.second) {
+                    if (not inserted.first->second.loadFromFile(req.first)) {
+                        // ...
+                    }
+                    req.second.set_value(&inserted.first->second);
+                } else {
+                    // ...
+                }
+            }
+            requests_.clear();
+        }
+
+    private:
+        std::mutex requestsMutex_;
+        std::vector<std::pair<std::string,
+                              std::promise<sf::Texture*>>> requests_;
+        std::map<std::string, sf::Texture> textures_;
+    };
 
 
     struct Context {
@@ -26,9 +62,11 @@ namespace Game {
         Camera camera_;
         KeyStates keyStates_;
         std::list<ObjectPtr> gameObjects_;
+        TextureDB textureDB_;
         sf::Shader lightingShader;
         sf::Texture testFace_, testShadow_;
-        sf::Texture vignette_;
+        sf::Texture vignetteTexture_;
+        sf::Sprite vignette_;
         sf::Clock deltaClock_;
 
         Context() :
@@ -51,12 +89,6 @@ namespace Game {
         ctx->world_.create(ctx->videoMode_.width, ctx->videoMode_.height);
         ctx->testFace_.loadFromFile("Sprite-0001.png");
         ctx->testShadow_.loadFromFile("Sprite-0002.png");
-        auto obj = makeObject();
-        auto gfx = make_unique<GraphicsComponent>(context->testFace_,
-                                                  context->testShadow_);
-        obj->setGraphicsComponent(std::move(gfx));
-        obj->setPosition({150, 150});
-        ctx->camera_.setTarget(obj);
         ctx->window_.setVerticalSyncEnabled(true);
         ctx->window_.setFramerateLimit(60);
         ctx->window_.setMouseCursorVisible(false);
@@ -64,7 +96,12 @@ namespace Game {
             throw std::runtime_error("unable to run without shaders");
         }
         ctx->lightingShader.loadFromFile("lighting.vert", "lighting.frag");
-        ctx->vignette_.loadFromFile("vignette.png");
+        ctx->vignetteTexture_.loadFromFile("vignette.png");
+        ctx->vignette_.setTexture(context->vignetteTexture_);
+        const auto windowSize = context->window_.getSize();
+        ctx->vignette_.setScale(windowSize.x / 450.f, windowSize.y / 450.f);
+        ctx->vignette_.setOrigin(225, 225);
+        ctx->vignette_.setColor({255, 255, 255, 181});
         return ctx;
     }
 
@@ -111,15 +148,19 @@ namespace Game {
 
     void display() {
         windowEventLoop();
+        context->textureDB_.update();
         context->shadowMap_.clear();
         context->shadowMap_.setView(context->camera_.getOverworldView());
         context->world_.clear({220, 220, 220});
         context->world_.setView(context->camera_.getOverworldView());
         for (auto& object : context->gameObjects_) {
-            if (auto gfx = object->getGraphicsComponent()) {
-                gfx->setPosition(object->getPosition());
-                gfx->drawFace(context->world_);
-                gfx->mapShadow(context->shadowMap_);
+            if (auto face = object->getFace()) {
+                face->setPosition(object->getPosition());
+                face->display(context->world_);
+            }
+            if (auto shadow = object->getShadow()) {
+                shadow->setPosition(object->getPosition());
+                shadow->display(context->shadowMap_);
             }
         }
         context->world_.display();
@@ -127,19 +168,15 @@ namespace Game {
 
         context->window_.clear();
         context->window_.setView(context->camera_.getWindowView());
-        sf::Sprite vignette(context->vignette_);
-        const auto windowSize = context->window_.getSize();
-        vignette.setScale(windowSize.x / 450.f, windowSize.y / 450.f);
-        vignette.setOrigin(225, 225);
-        vignette.setPosition(context->camera_.getWindowView().getCenter());
-        vignette.setColor({255, 255, 255, 181});
         sf::Sprite shadowMapSprite(context->shadowMap_.getTexture());
         context->lightingShader.setUniform("shadowMap",
                                            sf::Shader::CurrentTexture);
         context->lightingShader.setUniform("world",
                                            context->world_.getTexture());
         context->window_.draw(shadowMapSprite, &context->lightingShader);
-        context->window_.draw(vignette);
+        context->vignette_
+            .setPosition(context->camera_.getWindowView().getCenter());
+        context->window_.draw(context->vignette_);
         context->window_.display();
     }
 
@@ -176,7 +213,7 @@ namespace Game {
 #define EXPECT_BOOL(__BOOL_VAR)
 #endif // NDEBUG
 
-
+#include <iostream>
 extern "C" {
 sexp Game_update(sexp ctx, sexp self, sexp_sint_t n) {
     Game::update();
@@ -201,12 +238,47 @@ sexp Object_setPosition(sexp ctx, sexp self, sexp_sint_t n,
     return obj;
 }
 
+sexp Object_setFace(sexp ctx, sexp self, sexp_sint_t n,
+                    sexp obj) {
+    auto face = make_unique<Sprite>(Game::context->testFace_);
+    ((Object*)sexp_cpointer_value(obj))->setFace(std::move(face));
+    return obj;
+}
+
+sexp Object_setShadow(sexp ctx, sexp self, sexp_sint_t n,
+                      sexp obj) {
+    auto shadow = make_unique<Sprite>(Game::context->testShadow_);
+    ((Object*)sexp_cpointer_value(obj))->setShadow(std::move(shadow));
+    return obj;
+}
+
+sexp Game_setCameraTarget(sexp ctx, sexp self, sexp_sint_t n,
+                          sexp obj) {
+    const auto object = (Object*)sexp_cpointer_value(obj);
+    for (auto& obj : Game::context->gameObjects_) {
+        if (obj.get() == object) {
+            Game::context->camera_.setTarget(obj);
+            return SEXP_NULL;
+        }
+    }
+    return SEXP_NULL;
+}
+
 sexp Game_keyPressed(sexp ctx, sexp self, sexp_sint_t n, sexp key) {
     EXPECT_EXACT(key);
     const auto sel = (sf::Keyboard::Key)sexp_uint_value(key);
     const bool pressed = Game::context->keyStates_.isPressed(sel);
     return sexp_make_boolean(pressed);
 }
+
+sexp Game_createTexture(sexp ctx, sexp self, sexp_sint_t n, sexp fname) {
+    EXPECT_STRING(fname);
+    auto fut = Game::context->textureDB_.loadTexture(sexp_string_data(fname));
+    fut.wait();
+    std::cout << "created texture" << std::endl;
+    return sexp_make_cpointer(ctx, 0, fut.get(), nullptr, false);
+}
+
 }
 
 
@@ -219,12 +291,18 @@ namespace Game {
         engine.exportFunction("Game_isRunning", 0, (Fn)Game_isRunning);
         engine.exportFunction("Game_makeObject", 0, (Fn)Game_makeObject);
         engine.exportFunction("Game_keyPressed", 1, (Fn)(Game_keyPressed));
+        engine.exportFunction("Game_createTexture", 1, (Fn)(Game_createTexture));
         engine.exportFunction("Object_move", 3, (Fn)Object_setPosition);
+        engine.exportFunction("Object_setFace", 1, (Fn)Object_setFace);
+        engine.exportFunction("Object_setShadow", 1, (Fn)Object_setShadow);
         engine.setGlobal("Key_up", sf::Keyboard::Key::Up);
         engine.setGlobal("Key_down", sf::Keyboard::Key::Down);
         engine.setGlobal("Key_left", sf::Keyboard::Key::Left);
         engine.setGlobal("Key_right", sf::Keyboard::Key::Right);
         engine.setGlobal("Key_esc", sf::Keyboard::Key::Escape);
+        engine.exportFunction("Game_setCameraTarget", 1,
+                              (Fn)Game_setCameraTarget);
+
         engine.run("main.scm");
     }
 

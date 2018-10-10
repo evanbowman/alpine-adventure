@@ -28,6 +28,9 @@ void Camera::setTarget(std::shared_ptr<Object> target) {
 
 
 void Camera::update(Microseconds delta) {
+    if (not target_) {
+        return;
+    }
     overworldView_.setCenter(target_->getPosition());
     const float lerpSpeed = clamp(delta * 0.0000025f, 0.f, 1.f);
     currentPosition_ =

@@ -3,32 +3,21 @@
 #include <SFML/Graphics.hpp>
 #include <memory>
 
-// FIXME: all this stuff needs to be better organized
 
-
-class GraphicsComponent {
+class Sprite {
 public:
-    GraphicsComponent(const sf::Texture& faceTexture,
-                      const sf::Texture& shadowTexture) :
-        faceSprite_(faceTexture),
-        shadowSprite_(shadowTexture) {}
+    Sprite(const sf::Texture& texture) : sprite_(texture) {}
 
-    void drawFace(sf::RenderTarget& target) {
-        target.draw(faceSprite_);
-    }
-
-    void mapShadow(sf::RenderTarget& target) {
-        target.draw(shadowSprite_);
+    void display(sf::RenderTarget& target) {
+        target.draw(sprite_);
     }
 
     void setPosition(const sf::Vector2f& pos) {
-        faceSprite_.setPosition(pos);
-        shadowSprite_.setPosition(pos);
+        sprite_.setPosition(pos);
     }
 
 private:
-    sf::Sprite faceSprite_;
-    sf::Sprite shadowSprite_;
+    sf::Sprite sprite_;
 };
 
 
@@ -44,17 +33,26 @@ public:
         return position_;
     }
 
-    void setGraphicsComponent(std::unique_ptr<GraphicsComponent> gfx) {
-        gfx_ = std::move(gfx);
+    void setFace(std::unique_ptr<Sprite> face) {
+        face_ = std::move(face);
     }
 
-    GraphicsComponent* getGraphicsComponent() {
-        return gfx_.get();
+    Sprite* getFace() {
+        return face_.get();
+    }
+
+    void setShadow(std::unique_ptr<Sprite> shadow) {
+        shadow_ = std::move(shadow);
+    }
+
+    Sprite* getShadow() {
+        return shadow_.get();
     }
 
 private:
     sf::Vector2f position_;
-    std::unique_ptr<GraphicsComponent> gfx_;
+    std::unique_ptr<Sprite> face_;
+    std::unique_ptr<Sprite> shadow_;
 };
 
 using ObjectPtr = std::shared_ptr<Object>;

@@ -23,9 +23,6 @@ namespace Game {
     void runUpdateLoop();
 
 
-    void update();
-
-
     void display();
 
 
