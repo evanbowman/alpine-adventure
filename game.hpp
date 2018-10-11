@@ -17,13 +17,10 @@ namespace Game {
     ContextPtr initialize();
 
 
-    void bind(Context& context);
-
-
     void runUpdateLoop();
 
 
-    void display();
+    void runVideoLoop();
 
 
     bool isRunning();

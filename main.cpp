@@ -7,8 +7,6 @@ int main() {
     ThreadGuard logicThreadGuard([]() {
         Game::runUpdateLoop();
     });
-    while (Game::isRunning()) {
-        Game::display();
-    }
+    Game::runVideoLoop();
     return 0;
 }
