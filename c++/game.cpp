@@ -42,7 +42,9 @@ namespace Game {
 
     ObjectPtr makeObject() {
         auto obj = std::make_shared<Object>();
-        gContext->gameObjects_.push_back(obj);
+        gContext->gameObjects_.enter([&](Context::GameObjectList& list) {
+            list.push_front(obj);
+        });
         return obj;
     }
 
@@ -92,16 +94,19 @@ namespace Game {
         vidCtx.shadowMap_.setView(gContext->camera_.getOverworldView());
         vidCtx.world_.clear({220, 220, 220});
         vidCtx.world_.setView(gContext->camera_.getOverworldView());
-        for (auto& object : gContext->gameObjects_) {
-            if (auto face = object->getFace()) {
-                face->setPosition(object->getPosition());
-                face->display(vidCtx.world_);
+        gContext->gameObjects_.enter([&](Context::GameObjectList& list) {
+            for (auto& object : list) {
+                if (auto face = object->getFace()) {
+                    face->setPosition(object->getPosition());
+                    face->display(vidCtx.world_);
+                }
+                if (auto shadow = object->getShadow()) {
+                    shadow->setPosition(object->getPosition());
+                    shadow->display(vidCtx.shadowMap_);
+                }
             }
-            if (auto shadow = object->getShadow()) {
-                shadow->setPosition(object->getPosition());
-                shadow->display(vidCtx.shadowMap_);
-            }
-        }
+
+        });
         vidCtx.world_.display();
         vidCtx.shadowMap_.display();
 

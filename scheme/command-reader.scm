@@ -1,5 +1,5 @@
 ;;;
-;;; Open a repl @ stdout.
+;;; On-screen repl
 ;;;
 
 

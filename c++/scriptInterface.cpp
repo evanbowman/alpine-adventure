@@ -80,13 +80,20 @@ namespace Game {
 
     static sexp Game_setCameraTarget(sexp ctx, sexp self, sexp_sint_t n,
                                      sexp obj) {
+        // TODO: This could be bad when there're a lot of objects, but
+        // on the other hand, changing the camera target almost never
+        // happens... but I can imagine other cases where we would
+        // want the shared pointer instead of the raw object
+        // pointer... maybe shared_from_this would be ok.
         const auto object = (Object*)sexp_cpointer_value(obj);
-        for (auto& obj : Game::gContext->gameObjects_) {
-            if (obj.get() == object) {
-                Game::gContext->camera_.setTarget(obj);
-                return SEXP_NULL;
+        Game::gContext->gameObjects_.enter([&](Context::GameObjectList& list) {
+            for (auto& obj : list) {
+                if (obj.get() == object) {
+                    Game::gContext->camera_.setTarget(obj);
+                    return;
+                }
             }
-        }
+        });
         return SEXP_NULL;
     }
 

@@ -4,7 +4,7 @@
 #include "camera.hpp"
 #include "textureDB.hpp"
 #include "object.hpp"
-#include <list>
+#include <forward_list>
 #include <deque>
 #include "util.hpp"
 
@@ -15,9 +15,11 @@ namespace Game {
         Camera camera_;
         KeyStates keyStates_;
         TextureDB textureDB_;
-        std::list<ObjectPtr> gameObjects_;
         sf::Clock deltaClock_;
         bool running_;
+
+        using GameObjectList = std::forward_list<ObjectPtr>;
+        Synchronized<GameObjectList> gameObjects_;
 
         // Graphics updates *need* to happen on the main thread for some
         // operating systems. The easiest way to enforce this, is to require all
