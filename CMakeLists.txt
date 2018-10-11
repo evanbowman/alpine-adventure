@@ -3,13 +3,13 @@ cmake_minimum_required(VERSION 2.8)
 project(alpine)
 
 add_executable(alpine
-  main.cpp
-  game.cpp
-  script.cpp
-  textureDB.cpp
-  scriptInterface.cpp
-  context.cpp
-  camera.cpp)
+  c++/main.cpp
+  c++/game.cpp
+  c++/script.cpp
+  c++/textureDB.cpp
+  c++/scriptInterface.cpp
+  c++/context.cpp
+  c++/camera.cpp)
 
 target_compile_options(alpine
   PRIVATE "-O2"

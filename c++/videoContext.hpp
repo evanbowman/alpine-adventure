@@ -13,14 +13,17 @@ struct VideoContext {
     sf::Shader lightingShader;
     sf::Texture vignetteTexture_;
     sf::Sprite vignette_;
-    
+
     VideoContext() : videoMode_(sf::VideoMode::getDesktopMode()),
                      window_(videoMode_, "Test", sf::Style::Fullscreen) {
         shadowMap_.create(videoMode_.width, videoMode_.height);
         world_.create(videoMode_.width, videoMode_.height);
         window_.setMouseCursorVisible(false);
-        lightingShader.loadFromFile("lighting.vert", "lighting.frag");
-        vignetteTexture_.loadFromFile("vignette.png");
+        if (not lightingShader.loadFromFile("./glsl/lighting.vert",
+                                            "./glsl/lighting.frag")) {
+            throw std::runtime_error("failed to load shader");
+        }
+        vignetteTexture_.loadFromFile("./texture/vignette.png");
         vignette_.setTexture(vignetteTexture_);
         const auto windowSize = window_.getSize();
         vignette_.setScale(windowSize.x / 450.f, windowSize.y / 450.f);

@@ -227,7 +227,7 @@ namespace Game {
         engine.exportFunction("Game_setCameraTarget", 1,
                               (Fn)Game_setCameraTarget);
 
-        engine.run("main.scm");
+        engine.run("./scheme/main.scm");
         std::cout << "run complete" << std::endl;
     }
 
