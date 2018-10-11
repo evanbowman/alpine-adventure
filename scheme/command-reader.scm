@@ -112,7 +112,7 @@
 
 (define (command-reader)
   (Game_log "opened command reader")
-  (Game_activateTextChannel #t)
+  (Game_setTextChannelActive #t)
   (let loop ()
     (Game_sleep 10000)
     (command-update-modifier-states!)
@@ -131,6 +131,11 @@
     (cond
      ((command-modifier-pressed? Key_esc)
       (command-clear!)
+      (Game_setTextChannelActive #f)
+      (let drain ()
+        (if (not (Game_pollTextChannel))
+            '()
+            (drain)))
       (Game_log "closed command reader")
       (Game_sleep 1000000))
      (else

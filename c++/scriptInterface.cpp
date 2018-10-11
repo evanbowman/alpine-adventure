@@ -148,8 +148,8 @@ namespace Game {
         return SEXP_NULL;
     }
 
-    static sexp Game_activateTextChannel(sexp ctx, sexp self, sexp_sint_t n,
-                                         sexp enabled) {
+    static sexp Game_setTextChannelActive(sexp ctx, sexp self, sexp_sint_t n,
+                                          sexp enabled) {
         EXPECT_BOOL(enabled);
         gContext->textChannelActive_ = sexp_unbox_boolean(enabled);
         return SEXP_NULL;
@@ -182,8 +182,8 @@ namespace Game {
         engine.exportFunction("Game_makeObject", 0, (Fn)Game_makeObject);
         engine.exportFunction("Game_keyPressed", 1, (Fn)(Game_keyPressed));
         engine.exportFunction("Game_createTexture", 1, (Fn)Game_createTexture);
-        engine.exportFunction("Game_activateTextChannel", 1,
-                              (Fn)Game_activateTextChannel);
+        engine.exportFunction("Game_setTextChannelActive", 1,
+                              (Fn)Game_setTextChannelActive);
         engine.exportFunction("Game_pollTextChannel", 0,
                               (Fn)Game_pollTextChannel);
         engine.exportFunction("Game_setFramerateLimit", 1,
