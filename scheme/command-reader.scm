@@ -8,6 +8,24 @@
   (write object port)
   (get-output-string port))
 
+
+(define command-display-obj-pool '())
+
+
+(define (command-get-display-obj)
+  (if (not (null? command-display-obj-pool))
+      (let ((ret (car command-display-obj-pool)))
+        (set! command-display-obj-pool (cdr command-display-obj-pool))
+        ret)
+      (begin
+        (Game_log "command created display object")
+        (Game_makeObject))))
+
+
+(define (command-recycle-display-obj obj)
+  (set! command-display-obj-pool (cons obj command-display-obj-pool)))
+
+
 (import (chibi ast))
 
 (define (command-execute str)
@@ -32,6 +50,30 @@
 
 
 (define command-input '())
+(define command-display-list '())
+
+
+(define (command-push-char! unicode-char)
+  (set! command-input (cons unicode-char command-input))
+  (set! command-display-list (cons command-get-display-obj
+                                    command-display-list)))
+
+
+(define (command-pop-char!)
+  (if (not (null? command-input))
+      (begin
+        (set! command-input (cdr command-input))
+        (let ((recycle-obj (car command-display-list)))
+          (set! command-display-list (cdr command-display-list))
+          (command-recycle-display-obj recycle-obj)
+          #t))
+      #f))
+
+
+(define (command-clear!)
+  (if (not (command-pop-char!))
+      '()
+      (command-clear!)))
 
 
 (define command-modifier-key-states
@@ -76,16 +118,20 @@
     (command-update-modifier-states!)
     (cond
      ((command-modifier-pressed? Key_backspace)
-      (set! command-input (if (not (null? command-input))
-                              (cdr command-input)
-                              '())))
+      (command-pop-char!))
      ((command-modifier-pressed? Key_return)
       (Game_log (command-execute (int-list->string command-input)))
-      (set! command-input '())))
+      (command-clear!)))
     (command-get-input
      (lambda (unicode-char)
        (if (and (not (equal? unicode-char 8))
                 (not (equal? unicode-char 10)))
-           (set! command-input (cons unicode-char command-input))
+           (command-push-char! unicode-char)
            (int-list->string command-input))))
-    (loop)))
+    (cond
+     ((command-modifier-pressed? Key_esc)
+      (command-clear!)
+      (Game_log "closed command reader")
+      (Game_sleep 1000000))
+     (else
+      (loop)))))
