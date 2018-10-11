@@ -3,22 +3,7 @@
 ;;;
 
 (load "scheme/command-reader.scm")
-
-
-(Game_log "starting up...")
-(Game_setVSyncEnabled #t)
-(Game_setFramerateLimit 60)
-(Game_log "configuration complete")
-(define spr-txtr-0001 (Game_createTexture "texture/Sprite-0001.png"))
-(define spr-txtr-0002 (Game_createTexture "texture/Sprite-0002.png"))
-(Game_log "finished loading textures")
-
-
-(define (player)
-  (let ((obj (Game_makeObject)))
-    (Object_setFace obj spr-txtr-0001)
-    (Object_setShadow obj spr-txtr-0002)
-    obj))
+(load "scheme/boot.scm")
 
 
 (define test-obj (player))
@@ -27,9 +12,8 @@
 
 
 (define (update-game)
-  (cond
-   ((Game_keyPressed Key_esc)
-    (command-reader)))
+  (if (Game_keyPressed Key_esc)
+      (command-reader))
   (Game_update))
 
 

@@ -235,7 +235,6 @@ namespace Game {
                               (Fn)Game_setCameraTarget);
 
         engine.run("./scheme/main.scm");
-        std::cout << "run complete" << std::endl;
     }
 
 
