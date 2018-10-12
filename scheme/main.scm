@@ -21,7 +21,7 @@
 (let main-loop ()
   (cond
    ((not (Game_isRunning))
-    '())
+    (Game_log "main loop exited normally"))
    (else
     (update-game)
     (main-loop))))

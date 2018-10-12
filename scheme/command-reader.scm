@@ -32,22 +32,11 @@
          (return (->string (eval (read (open-input-string str))))))))))
 
 
-(define (int-list->string command)
-  (define expr-len (length command))
-  (define str (make-string expr-len))
-  (let populate ((index (- expr-len 1)) (char-list command))
-    (cond
-     ((eq? index -1) str)
-     (else
-      (string-set! str index (integer->char (car char-list)))
-      (populate (- index 1) (cdr char-list))))))
-
-
 (define command-input '())
 (define command-display-list '())
 
 
-(define (command-push-char! unicode-char)
+(define (command-push-char! unicode-char window-info)
   (set! command-input (cons unicode-char command-input))
   (set! command-display-list (cons (command-get-display-obj)
                                    command-display-list)))
@@ -104,33 +93,36 @@
           (receiver unicode-char)))))
 
 
+(define (command-drain-text)
+  (if (not (Game_pollTextChannel))
+      '()
+      (command-drain-text)))
+
+
 (define (command-reader)
   (Game_log "opened command reader")
   (Game_setTextChannelActive #t)
-  (let loop ()
-    (Game_sleep 10000)
-    (command-update-modifier-states!)
-    (cond
-     ((command-modifier-pressed? Key_backspace)
-      (command-pop-char!))
-     ((command-modifier-pressed? Key_return)
-      (Game_log (command-execute (int-list->string command-input)))
-      (command-clear!)))
-    (command-get-input
-     (lambda (unicode-char)
-       (if (and (not (equal? unicode-char 8))
-                (not (equal? unicode-char 10)))
-           (command-push-char! unicode-char)
-           (int-list->string command-input))))
-    (cond
-     ((command-modifier-pressed? Key_esc)
-      (command-clear!)
-      (Game_setTextChannelActive #f)
-      (let drain ()
-        (if (not (Game_pollTextChannel))
-            '()
-            (drain)))
-      (Game_log "closed command reader")
-      (Game_sleep 1000000))
-     (else
-      (loop)))))
+  (let ((window-info (Game_describeWindow)))
+    (let loop ()
+      (Game_sleep 10000)
+      (command-update-modifier-states!)
+      (cond
+       ((command-modifier-pressed? Key_backspace)
+        (command-pop-char!))
+       ((command-modifier-pressed? Key_return)
+        (Game_log (command-execute (int-list->string command-input)))
+        (command-clear!)))
+      (command-get-input
+       (lambda (unicode-char)
+         (if (and (not (equal? unicode-char 8))
+                  (not (equal? unicode-char 10)))
+             (command-push-char! unicode-char window-info)
+             (int-list->string command-input))))
+      (if (command-modifier-pressed? Key_esc)
+          (begin
+            (command-clear!)
+            (Game_setTextChannelActive #f)
+            (command-drain-text)
+            (Game_log "closed command reader")
+            (Game_sleep 1000000))
+          (loop)))))
