@@ -42,7 +42,7 @@ namespace Game {
 
     ObjectPtr makeObject() {
         auto obj = std::make_shared<Object>();
-        gContext->gameObjects_.enter([&](Context::GameObjectList& list) {
+        gContext->gameObjects_.enter([&](GameObjectList& list) {
             list.push_front(obj);
         });
         return obj;
@@ -68,7 +68,7 @@ namespace Game {
 
             case sf::Event::TextEntered:
                 if (gContext->textChannelActive_) {
-                    gContext->textChannel_.enter([&](Context::TextChannel& t) {
+                    gContext->textChannel_.enter([&](TextChannel& t) {
                         t.push_back(event.text.unicode);
                     });
                 }
@@ -94,7 +94,7 @@ namespace Game {
         vidCtx.shadowMap_.setView(gContext->camera_.getOverworldView());
         vidCtx.world_.clear({220, 220, 220});
         vidCtx.world_.setView(gContext->camera_.getOverworldView());
-        gContext->gameObjects_.enter([&](Context::GameObjectList& list) {
+        gContext->gameObjects_.enter([&](GameObjectList& list) {
             for (auto& object : list) {
                 if (auto face = object->getFace()) {
                     face->setPosition(object->getPosition());

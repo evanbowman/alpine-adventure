@@ -7,18 +7,23 @@
 #include <forward_list>
 #include <deque>
 #include "util.hpp"
+#include <fstream>
 
 
 namespace Game {
+
+    using GameObjectList = std::forward_list<ObjectPtr>;
+    using TextChannel = std::deque<unsigned>;
+
 
     struct Context {
         Camera camera_;
         KeyStates keyStates_;
         TextureDB textureDB_;
         sf::Clock deltaClock_;
+        std::ofstream logfile_;
         bool running_;
 
-        using GameObjectList = std::forward_list<ObjectPtr>;
         Synchronized<GameObjectList> gameObjects_;
 
         // Graphics updates *need* to happen on the main thread for some
@@ -39,7 +44,6 @@ namespace Game {
             return fut;
         }
 
-        using TextChannel = std::deque<unsigned>;
         Synchronized<TextChannel> textChannel_;
         bool textChannelActive_;
 

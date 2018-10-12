@@ -3,12 +3,6 @@
 ;;;
 
 
-(define (->string object)
-  (define port (open-output-string))
-  (write object port)
-  (get-output-string port))
-
-
 (define command-display-obj-pool '())
 
 
@@ -55,8 +49,8 @@
 
 (define (command-push-char! unicode-char)
   (set! command-input (cons unicode-char command-input))
-  (set! command-display-list (cons command-get-display-obj
-                                    command-display-list)))
+  (set! command-display-list (cons (command-get-display-obj)
+                                   command-display-list)))
 
 
 (define (command-pop-char!)

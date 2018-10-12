@@ -2,6 +2,7 @@
 ;;; Entry point for the program
 ;;;
 
+(load "scheme/util.scm")
 (load "scheme/command-reader.scm")
 (load "scheme/boot.scm")
 

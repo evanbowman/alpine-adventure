@@ -17,3 +17,6 @@
     (Object_setFace obj spr-txtr-0001)
     (Object_setShadow obj spr-txtr-0002)
     obj))
+
+
+(Game_log (->string (Game_describeWindow)))

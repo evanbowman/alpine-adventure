@@ -66,6 +66,7 @@ namespace Game {
 
     static sexp Object_setFace(sexp ctx, sexp self, sexp_sint_t n,
                                sexp obj, sexp txtr) {
+        EXPECT_POINTER(obj); EXPECT_POINTER(txtr);
         auto spr = make_unique<Sprite>(*(sf::Texture*)sexp_cpointer_value(txtr));
         ((Object*)sexp_cpointer_value(obj))->setFace(std::move(spr));
         return obj;
@@ -73,20 +74,35 @@ namespace Game {
 
     static sexp Object_setShadow(sexp ctx, sexp self, sexp_sint_t n,
                                  sexp obj, sexp txtr) {
+        EXPECT_POINTER(obj); EXPECT_POINTER(txtr);
         auto spr = make_unique<Sprite>(*(sf::Texture*)sexp_cpointer_value(txtr));
         ((Object*)sexp_cpointer_value(obj))->setShadow(std::move(spr));
         return obj;
     }
 
+    static sexp Game_describeWindow(sexp ctx, sexp self, sexp_sint_t n) {
+        const auto& view = gContext->camera_.getOverworldView();
+        auto center = view.getCenter();
+        auto size = view.getSize();
+        auto tofloat = [&](float val) { return sexp_make_flonum(ctx, val); };
+        sexp result = sexp_make_vector(ctx, SEXP_FOUR, SEXP_NULL);
+        sexp_vector_set(result, SEXP_ZERO, tofloat(center.x));
+        sexp_vector_set(result, SEXP_ONE, tofloat(center.y));
+        sexp_vector_set(result, SEXP_TWO, tofloat(size.x));
+        sexp_vector_set(result, SEXP_THREE, tofloat(size.y));
+        return result;
+    }
+
     static sexp Game_setCameraTarget(sexp ctx, sexp self, sexp_sint_t n,
                                      sexp obj) {
+        EXPECT_POINTER(obj);
         // TODO: This could be bad when there're a lot of objects, but
         // on the other hand, changing the camera target almost never
         // happens... but I can imagine other cases where we would
         // want the shared pointer instead of the raw object
         // pointer... maybe shared_from_this would be ok.
         const auto object = (Object*)sexp_cpointer_value(obj);
-        Game::gContext->gameObjects_.enter([&](Context::GameObjectList& list) {
+        Game::gContext->gameObjects_.enter([&](GameObjectList& list) {
             for (auto& obj : list) {
                 if (obj.get() == object) {
                     Game::gContext->camera_.setTarget(obj);
@@ -115,7 +131,7 @@ namespace Game {
 
     static sexp Game_log(sexp ctx, sexp self, sexp_sint_t n, sexp msg) {
         EXPECT_STRING(msg);
-        std::cout << sexp_string_data(msg) << std::endl;
+        gContext->logfile_ << sexp_string_data(msg) << std::endl;
         return SEXP_NULL;
     }
 
@@ -155,11 +171,97 @@ namespace Game {
         return SEXP_NULL;
     }
 
+    // template <typename T>
+    // struct Builtin {
+    //     T routine;
+    //     const char* name;
+    //     int argc;
+    // };
+
+    // template <typename T>
+    // Builtin <T> makeBuiltin(const char* name, int argc, T proc) {
+    //     return { proc, name, argc };
+    // }
+
+    // auto builtins =
+    //     std::make_tuple(
+    //     makeBuiltin("Game_update", 0,
+    //         [](sexp ctx, sexp self, sexp_sint_t n) {
+    //             Game::update();
+    //             return SEXP_NULL;
+    //         }),
+    //     makeBuiltin("Game_isRunning", 0,
+    //         [](sexp ctx, sexp self, sexp_sint_t n) {
+    //             return sexp_make_boolean(Game::isRunning());
+    //         }),
+    //     makeBuiltin("Game_makeObject", 0,
+    //         [](sexp ctx, sexp self, sexp_sint_t n) {
+    //             return sexp_make_cpointer(ctx, SEXP_CPOINTER,
+    //                                       Game::makeObject().get(),
+    //                                       nullptr, false);
+    //         }),
+    //     makeBuiltin("Object_move", 3,
+    //         [](sexp ctx, sexp self, sexp_sint_t n,
+    //            sexp obj, sexp x, sexp y) {
+    //             EXPECT_FLOAT(x); EXPECT_FLOAT(y);
+    //             Object* object = (Object*)sexp_cpointer_value(obj);
+    //             object->setPosition({(float)sexp_flonum_value(x),
+    //                                  (float)sexp_flonum_value(y)});
+    //             return obj;
+    //         }),
+    //     makeBuiltin("Object_setFace", 2,
+    //         [](sexp ctx, sexp self, sexp_sint_t n, sexp obj, sexp txtr) {
+    //             EXPECT_POINTER(obj); EXPECT_POINTER(txtr);
+    //             auto tptr = (sf::Texture*)sexp_cpointer_value(txtr);
+    //             auto spr = make_unique<Sprite>(*tptr);
+    //             ((Object*)sexp_cpointer_value(obj))->setFace(std::move(spr));
+    //             return obj;
+    //         }),
+    //     makeBuiltin("Game_setShadow", 2,
+    //         [](sexp ctx, sexp self, sexp_sint_t n, sexp obj, sexp txtr) {
+    //             EXPECT_POINTER(obj); EXPECT_POINTER(txtr);
+    //             auto tptr = (sf::Texture*)sexp_cpointer_value(txtr);
+    //             auto spr = make_unique<Sprite>(*tptr);
+    //             ((Object*)sexp_cpointer_value(obj))->setShadow(std::move(spr));
+    //             return obj;
+    //         }),
+    //     makeBuiltin("Game_setCameraTarget", 1,
+    //         [](sexp ctx, sexp self, sexp_sint_t n, sexp obj) {
+    //             EXPECT_POINTER(obj);
+    //             // TODO: This could be bad when there're a lot of objects, but
+    //             // on the other hand, changing the camera target almost never
+    //             // happens... but I can imagine other cases where we would
+    //             // want the shared pointer instead of the raw object
+    //             // pointer... maybe shared_from_this would be ok.
+    //             const auto object = (Object*)sexp_cpointer_value(obj);
+    //             Game::gContext->gameObjects_.enter([&](GameObjectList& list) {
+    //                 for (auto& obj : list) {
+    //                     if (obj.get() == object) {
+    //                         Game::gContext->camera_.setTarget(obj);
+    //                         return;
+    //                     }
+    //                 }
+    //             });
+    //             return SEXP_NULL;
+    //         }),
+    //     makeBuiltin("Game_setTextChannelActive", 1,
+    //         [](sexp ctx, sexp self, sexp_sint_t n, sexp enabled) {
+    //             EXPECT_BOOL(enabled);
+    //             gContext->textChannelActive_ = sexp_unbox_boolean(enabled);
+    //             return SEXP_NULL;
+    //         }),
+    //     makeBuiltin("Game_sleep", 1,
+    //         [](sexp ctx, sexp self, sexp_sint_t n, sexp duration) {
+    //             EXPECT_EXACT(duration);
+    //             const auto val = sexp_uint_value(duration);
+    //             std::this_thread::sleep_for(std::chrono::microseconds(val));
+    //             return SEXP_NULL;
+    //         }));
 
     static sexp Game_pollTextChannel(sexp ctx, sexp self, sexp_sint_t n) {
         unsigned result;
         bool resultSet = false;
-        gContext->textChannel_.enter([&](Context::TextChannel& t) {
+        gContext->textChannel_.enter([&](TextChannel& t) {
             if (not t.empty()) {
                 result = t.front();
                 t.pop_front();
@@ -182,6 +284,8 @@ namespace Game {
         engine.exportFunction("Game_makeObject", 0, (Fn)Game_makeObject);
         engine.exportFunction("Game_keyPressed", 1, (Fn)(Game_keyPressed));
         engine.exportFunction("Game_createTexture", 1, (Fn)Game_createTexture);
+        engine.exportFunction("Game_describeWindow", 0,
+                              (Fn)Game_describeWindow);
         engine.exportFunction("Game_setTextChannelActive", 1,
                               (Fn)Game_setTextChannelActive);
         engine.exportFunction("Game_pollTextChannel", 0,
