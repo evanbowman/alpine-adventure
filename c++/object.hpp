@@ -8,7 +8,7 @@ namespace Game {
 
     class Object {
     public:
-        Object() {}
+        Object() : visible_(true) {}
 
         void setPosition(const sf::Vector2f& pos) {
             position_ = pos;
@@ -34,10 +34,19 @@ namespace Game {
             return shadow_.get();
         }
 
+        bool isVisible() const {
+            return visible_;
+        }
+
+        void setVisible(bool visible) {
+            visible_ = visible;
+        }
+
     private:
         sf::Vector2f position_;
         std::unique_ptr<Sprite> face_;
         std::unique_ptr<Sprite> shadow_;
+        bool visible_;
     };
 
 

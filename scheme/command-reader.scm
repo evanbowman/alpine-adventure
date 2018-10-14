@@ -3,21 +3,21 @@
 ;;;
 
 
-(define command-display-obj-pool '())
+(define command-display-widjet-pool '())
 
 
-(define (command-get-display-obj)
-  (if (not (null? command-display-obj-pool))
-      (let ((ret (car command-display-obj-pool)))
-        (set! command-display-obj-pool (cdr command-display-obj-pool))
+(define (command-get-display-widjet)
+  (if (not (null? command-display-widjet-pool))
+      (let ((ret (car command-display-widjet-pool)))
+        (set! command-display-widjet-pool (cdr command-display-widjet-pool))
         ret)
       (begin
         (Game_log "command created display object")
-        (Game_makeObject))))
+        (Game_makeWidjet))))
 
 
-(define (command-recycle-display-obj obj)
-  (set! command-display-obj-pool (cons obj command-display-obj-pool)))
+(define (command-recycle-display-widjet widjet)
+  (set! command-display-widjet-pool (cons widjet command-display-widjet-pool)))
 
 
 (import (chibi ast))
@@ -34,21 +34,31 @@
 
 (define command-input '())
 (define command-display-list '())
+(define command-text-bar
+  ((lambda ()
+     (let ((bar (Game_makeWidjet))
+           (window-width (vector-ref window-info 2))
+           (window-height (vector-ref window-info 2)))
+       (Object_setFace bar spr-pixel)
+       (Object_setVisible bar #f)
+       (Object_setFaceColor bar #(128 128 128 128))
+       (Object_setFaceScale bar window-width 32.0)))))
 
 
 (define (command-push-char! unicode-char window-info)
   (set! command-input (cons unicode-char command-input))
-  (set! command-display-list (cons (command-get-display-obj)
-                                   command-display-list)))
+  (let ((glyph (command-get-display-widjet)))
+    ;; TODO: set properties for glyph
+    (set! command-display-list (cons glyph command-display-list))))
 
 
 (define (command-pop-char!)
   (if (not (null? command-input))
       (begin
         (set! command-input (cdr command-input))
-        (let ((recycle-obj (car command-display-list)))
+        (let ((recycle-widjet (car command-display-list)))
           (set! command-display-list (cdr command-display-list))
-          (command-recycle-display-obj recycle-obj)
+          (command-recycle-display-widjet recycle-widjet)
           #t))
       #f))
 
@@ -101,6 +111,7 @@
 
 (define (command-reader)
   (Game_log "opened command reader")
+  (Object_setVisible command-text-bar #t)
   (Game_setTextChannelActive #t)
   (let ((window-info (Game_describeWindow)))
     (let loop ()
@@ -123,6 +134,7 @@
             (command-clear!)
             (Game_setTextChannelActive #f)
             (command-drain-text)
+            (Object_setVisible command-text-bar #f)
             (Game_log "closed command reader")
             (Game_sleep 1000000))
           (loop)))))

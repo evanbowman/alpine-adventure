@@ -45,7 +45,7 @@ namespace Game {
 
 
     namespace typeids {
-    sexp_uint_t texture, object, widjet;
+    sexp_uint_t texture, object;
     }
 
 
@@ -79,7 +79,7 @@ namespace Game {
          }},
         {"Game_makeWidjet", 0,
          [](sexp ctx, sexp self, sexp_sint_t n) {
-             return sexp_make_cpointer(ctx, typeids::widjet,
+             return sexp_make_cpointer(ctx, typeids::object,
                                        Game::makeWidjet().get(),
                                        nullptr, false);
          }},
@@ -113,13 +113,15 @@ namespace Game {
         {"Object_setFaceColor", 2,
          [](sexp ctx, sexp self, sexp_sint_t n, sexp obj, sexp colorVector) {
              EXPECT_CUSTOM(obj, typeids::object); EXPECT_VECTOR(colorVector);
-             if (auto spr = ((Object*)obj)->getFace()) {
+             if (auto spr = ((Object*)sexp_cpointer_value(obj))->getFace()) {
                  spr->setColor({
                          (uint8_t)sexp_uint_value(sexp_vector_ref(colorVector, SEXP_ZERO)),
                          (uint8_t)sexp_uint_value(sexp_vector_ref(colorVector, SEXP_ONE)),
                          (uint8_t)sexp_uint_value(sexp_vector_ref(colorVector, SEXP_TWO)),
                          (uint8_t)sexp_uint_value(sexp_vector_ref(colorVector, SEXP_THREE)),
                      });
+             } else {
+                 std::cout << "object has no face" << std::endl;
              }
              return obj;
          }},
@@ -127,10 +129,39 @@ namespace Game {
          [](sexp ctx, sexp self, sexp_sint_t n, sexp obj, sexp xs, sexp ys) {
              EXPECT_CUSTOM(obj, typeids::object);
              EXPECT_FLOAT(xs); EXPECT_FLOAT(ys);
-             if (auto spr = ((Object*)obj)->getFace()) {
+             if (auto spr = ((Object*)sexp_cpointer_value(obj))->getFace()) {
                  spr->setScale({(float)sexp_flonum_value(xs),
                                 (float)sexp_flonum_value(ys)});
              }
+             return obj;
+         }},
+        {"Object_setFaceSubrect", 2,
+         [](sexp ctx, sexp self, sexp_sint_t n, sexp obj, sexp rect) {
+             EXPECT_CUSTOM(obj, typeids::object);
+             EXPECT_VECTOR(rect);
+             if (auto spr = ((Object*)sexp_cpointer_value(obj))->getFace()) {
+                 spr->setSubRect({
+                         (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_ZERO)),
+                         (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_ONE)),
+                         (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_TWO)),
+                         (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_THREE))
+                     });
+             }
+             return obj;
+         }},
+        {"Object_setFaceKeyframe", 2,
+         [](sexp ctx, sexp self, sexp_sint_t n, sexp obj, sexp frame) {
+             EXPECT_CUSTOM(obj, typeids::object); EXPECT_EXACT(obj);
+             if (auto spr = ((Object*)sexp_cpointer_value(obj))->getFace()) {
+                 spr->setKeyframe(sexp_uint_value(frame));
+             }
+             return obj;
+         }},
+        {"Object_setVisible", 2,
+         [](sexp ctx, sexp self, sexp_sint_t n, sexp obj, sexp visible) {
+             EXPECT_CUSTOM(obj, typeids::object); EXPECT_BOOL(visible);
+             ((Object*)sexp_cpointer_value(obj))
+                 ->setVisible(sexp_unbox_boolean(visible));
              return obj;
          }},
         {"Game_describeWindow", 0,
@@ -288,15 +319,17 @@ namespace Game {
 
     void runUpdateLoop() {
         ScriptEngine engine;
+        // FIXME: type registration was causing segfaults upon finalization
+        // typeids::texture = engine.registerType("Game_Texture");
+        // typeids::object = engine.registerType("Game_Object");
+        typeids::texture = SEXP_CPOINTER;
+        typeids::object = SEXP_CPOINTER;
         for (const auto& fnExport : functionExports) {
             engine.exportFunction(fnExport.name_, fnExport.argc_, fnExport.fn_);
         }
         for (const auto& global : globals) {
             engine.setGlobal(global.name_, global.value_);
         }
-        typeids::texture = engine.registerType("Game_Texture");
-        typeids::object = engine.registerType("Game_Object");
-        typeids::widjet = engine.registerType("Game_Widjet");
         engine.run("./scheme/main.scm");
     }
 

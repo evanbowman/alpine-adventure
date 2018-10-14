@@ -3,8 +3,8 @@
 ;;;
 
 (load "scheme/util.scm")
-(load "scheme/command-reader.scm")
 (load "scheme/boot.scm")
+(load "scheme/command-reader.scm")
 
 
 (define test-obj (player))

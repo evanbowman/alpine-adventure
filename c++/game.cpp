@@ -49,9 +49,9 @@ namespace Game {
     }
 
 
-    WidjetPtr makeWidjet() {
-        auto widjet = std::make_shared<Widjet>();
-        gContext->widjets_.enter([&](WidjetList& list) {
+    ObjectPtr makeWidjet() {
+        auto widjet = std::make_shared<Object>();
+        gContext->widjets_.enter([&](ObjectList& list) {
             list.push_front(widjet);
         });
         return widjet;
@@ -90,14 +90,7 @@ namespace Game {
     }
 
 
-    void display(VideoContext& vidCtx) {
-        gContext->videoRequests_.enter([&vidCtx](VideoRequestVector& reqs) {
-            for (auto& req : reqs) {
-                req(vidCtx);
-            }
-            reqs.clear();
-        });
-        windowEventLoop(vidCtx);
+    void drawObjects(VideoContext& vidCtx) {
         vidCtx.shadowMap_.clear();
         vidCtx.shadowMap_.setView(gContext->camera_.getOverworldView());
         vidCtx.world_.clear({220, 220, 220});
@@ -119,16 +112,47 @@ namespace Game {
         vidCtx.shadowMap_.display();
 
         vidCtx.window_.clear();
-        vidCtx.window_.setView(gContext->camera_.getWindowView());
         sf::Sprite shadowMapSprite(vidCtx.shadowMap_.getTexture());
         vidCtx.lightingShader.setUniform("shadowMap",
-                                           sf::Shader::CurrentTexture);
+                                         sf::Shader::CurrentTexture);
         vidCtx.lightingShader.setUniform("world",
-                                           vidCtx.world_.getTexture());
+                                         vidCtx.world_.getTexture());
         vidCtx.window_.draw(shadowMapSprite, &vidCtx.lightingShader);
-        vidCtx.vignette_
-            .setPosition(gContext->camera_.getWindowView().getCenter());
-        vidCtx.window_.draw(vidCtx.vignette_);
+    }
+
+
+    void drawWidjets(VideoContext& vidCtx) {
+        const sf::View windowView = gContext->camera_.getWindowView();
+        const sf::Vector2f screenSize = {
+            windowView.getSize().x / 2.f, windowView.getSize().y / 2.f
+        };
+        sf::View widjetView{
+            {screenSize.x / 2, screenSize.y / 2}, screenSize
+        };
+        vidCtx.window_.setView(widjetView);
+        gContext->widjets_.enter([&](ObjectList& list) {
+            for (auto& widjet : list) {
+                if (widjet->isVisible()) {
+                    if (auto spr = widjet->getFace()) {
+                        spr->display(vidCtx.window_);
+                    }
+                }
+            }
+        });
+    }
+
+
+    void display(VideoContext& vidCtx) {
+        gContext->videoRequests_.enter([&vidCtx](VideoRequestVector& reqs) {
+            for (auto& req : reqs) {
+                req(vidCtx);
+            }
+            reqs.clear();
+        });
+        windowEventLoop(vidCtx);
+        vidCtx.window_.setView(gContext->camera_.getWindowView());
+        drawObjects(vidCtx);
+        drawWidjets(vidCtx);
         vidCtx.window_.display();
     }
 

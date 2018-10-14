@@ -6,7 +6,10 @@ namespace Game {
 
     class Sprite {
     public:
-        Sprite(const sf::Texture& texture) : sprite_(texture) {}
+        using Keyframe = size_t;
+
+        Sprite(const sf::Texture& texture) :
+            sprite_(texture), keyframe_(0) {}
 
         void display(sf::RenderTarget& target) {
             target.draw(sprite_);
@@ -24,8 +27,19 @@ namespace Game {
             sprite_.setColor(color);
         }
 
+        void setSubRect(const sf::IntRect& rect) {
+            sprite_.setTextureRect(rect);
+        }
+
+        void setKeyframe(Keyframe keyframe) {
+            auto rect = sprite_.getTextureRect();
+            rect.left += rect.width * (keyframe - keyframe_);
+            keyframe_ = keyframe;
+        }
+
     private:
         sf::Sprite sprite_;
+        size_t keyframe_;
     };
 
 

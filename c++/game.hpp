@@ -6,7 +6,7 @@
 #include "types.hpp"
 #include "camera.hpp"
 #include "object.hpp"
-#include "widjet.hpp"
+
 
 namespace Game {
 
@@ -30,5 +30,7 @@ namespace Game {
     ObjectPtr makeObject();
 
 
-    WidjetPtr makeWidjet();
+    ObjectPtr makeWidjet();
+
+
 }

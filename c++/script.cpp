@@ -17,7 +17,10 @@ ScriptEngine::ScriptEngine() : state_(new State) {
 ScriptEngine::TypeId ScriptEngine::registerType(const std::string& name) {
     sexp_gc_var2(namestr, type);
     namestr = sexp_c_string(state_->ctx, name.c_str(), name.length());
-    type = sexp_register_c_type(state_->ctx, namestr, NULL);
+    type = sexp_register_c_type(state_->ctx, namestr, nullptr);
+    if (sexp_exceptionp(type)) {
+        throw std::runtime_error("failed to register type: " + name);
+    }
     return sexp_type_tag(type);
 }
 
