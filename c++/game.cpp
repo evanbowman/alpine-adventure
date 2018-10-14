@@ -42,10 +42,19 @@ namespace Game {
 
     ObjectPtr makeObject() {
         auto obj = std::make_shared<Object>();
-        gContext->gameObjects_.enter([&](GameObjectList& list) {
+        gContext->objects_.enter([&](ObjectList& list) {
             list.push_front(obj);
         });
         return obj;
+    }
+
+
+    WidjetPtr makeWidjet() {
+        auto widjet = std::make_shared<Widjet>();
+        gContext->widjets_.enter([&](WidjetList& list) {
+            list.push_front(widjet);
+        });
+        return widjet;
     }
 
 
@@ -82,19 +91,18 @@ namespace Game {
 
 
     void display(VideoContext& vidCtx) {
-        {
-            std::lock_guard<std::mutex> guard(gContext->videoRequestsMutex_);
-            for (auto& req : gContext->videoRequests_) {
+        gContext->videoRequests_.enter([&vidCtx](VideoRequestVector& reqs) {
+            for (auto& req : reqs) {
                 req(vidCtx);
             }
-            gContext->videoRequests_.clear();
-        }
+            reqs.clear();
+        });
         windowEventLoop(vidCtx);
         vidCtx.shadowMap_.clear();
         vidCtx.shadowMap_.setView(gContext->camera_.getOverworldView());
         vidCtx.world_.clear({220, 220, 220});
         vidCtx.world_.setView(gContext->camera_.getOverworldView());
-        gContext->gameObjects_.enter([&](GameObjectList& list) {
+        gContext->objects_.enter([&](ObjectList& list) {
             for (auto& object : list) {
                 if (auto face = object->getFace()) {
                     face->setPosition(object->getPosition());

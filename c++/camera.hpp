@@ -5,26 +5,31 @@
 
 #include "types.hpp"
 
-class Object;
+namespace Game {
+
+    class Object;
 
 
-class Camera {
-public:
-    Camera(const sf::Vector2f& viewPort,
-           const sf::Vector2u& windowSize);
+    class Camera {
+    public:
+        Camera(const sf::Vector2f& viewPort,
+               const sf::Vector2u& windowSize);
 
-    void update(Microseconds delta);
+        void update(Microseconds delta);
 
-    void setTarget(std::shared_ptr<Object> target);
+        void setTarget(std::shared_ptr<Object> target);
 
-    const sf::View& getWindowView() const;
+        const sf::View& getWindowView() const;
 
-    const sf::View& getOverworldView() const;
+        const sf::View& getOverworldView() const;
 
-private:
-    sf::View overworldView_;
-    sf::View windowView_;
-    sf::Vector2u windowSize_;
-    std::shared_ptr<Object> target_;
-    sf::Vector2f currentPosition_;
-};
+    private:
+        sf::View overworldView_;
+        sf::View windowView_;
+        sf::Vector2u windowSize_;
+        std::shared_ptr<Object> target_;
+        sf::Vector2f currentPosition_;
+    };
+
+
+}

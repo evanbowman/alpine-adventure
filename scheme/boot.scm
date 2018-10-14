@@ -9,6 +9,8 @@
 (Game_log "configuration complete")
 (define spr-txtr-0001 (Game_createTexture "texture/Sprite-0001.png"))
 (define spr-txtr-0002 (Game_createTexture "texture/Sprite-0002.png"))
+(define spr-glyphs (Game_createTexture "texture/ubuntu-mono-18.png"))
+(define spr-pixel (Game_createTexture "texture/pixel.png"))
 (Game_log "finished loading textures")
 
 

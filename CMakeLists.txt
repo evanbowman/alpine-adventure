@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(alpine)
 
+link_directories("/usr/local/lib/")
+
 add_executable(alpine
   c++/main.cpp
   c++/game.cpp
@@ -20,5 +22,5 @@ target_link_libraries(alpine sfml-window)
 target_link_libraries(alpine sfml-graphics)
 target_link_libraries(alpine sfml-system)
 target_link_libraries(alpine sfml-audio)
-
+target_link_libraries(alpine pthread)
 target_link_libraries(alpine chibi-scheme)

@@ -14,6 +14,10 @@ public:
 
     void run(const String& script);
 
+    using TypeId = unsigned long long;
+    TypeId registerType(const std::string& name);
+
+
     void exportFunction(const String& sym,
                         int argc,
                         void*(*proc)());

@@ -14,6 +14,14 @@ ScriptEngine::ScriptEngine() : state_(new State) {
 }
 
 
+ScriptEngine::TypeId ScriptEngine::registerType(const std::string& name) {
+    sexp_gc_var2(namestr, type);
+    namestr = sexp_c_string(state_->ctx, name.c_str(), name.length());
+    type = sexp_register_c_type(state_->ctx, namestr, NULL);
+    return sexp_type_tag(type);
+}
+
+
 void ScriptEngine::run(const String& script) {
     sexp_gc_var2(result, mainfile);
     mainfile = sexp_c_string(state_->ctx, script.c_str(), -1);
