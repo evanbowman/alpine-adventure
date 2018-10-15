@@ -17,6 +17,7 @@ using TextChannel = std::deque<unsigned>;
 using VideoRequest = std::packaged_task<void *(VideoContext &)>;
 using VideoRequestVector = std::vector<VideoRequest>;
 
+
 struct Context {
     Camera camera_;
     KeyStates keyStates_;
@@ -27,6 +28,7 @@ struct Context {
 
     Synchronized<ObjectList> objects_;
 
+
     // Widjets are Objects too, but widjets differ from objects in
     // how the game displays them:
     //
@@ -35,6 +37,7 @@ struct Context {
     //
     // 2) Widjets are not passed through the lighting shaders.
     Synchronized<ObjectList> widjets_;
+
 
     // Graphics updates *need* to happen on the main thread for some
     // operating systems. The easiest way to enforce this, is to require all
@@ -52,8 +55,10 @@ struct Context {
         return fut;
     }
 
+
     Synchronized<TextChannel> textChannel_;
     bool textChannelActive_;
+
 
     CollisionDetector collisionDetector_;
 

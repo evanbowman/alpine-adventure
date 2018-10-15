@@ -111,6 +111,19 @@
           (receiver unicode-char)))))
 
 
+(define command-displaying-result #t)
+
+
+(define (command-apply-mutator! action)
+  (cond
+   (command-displaying-result
+    (set! command-displaying-result #f)
+    (command-clear!)
+    (action))
+   (else
+    (action))))
+
+
 (define (command-drain-text)
   (if (not (Game_pollTextChannel))
       '()
@@ -127,15 +140,27 @@
       (command-update-modifier-states!)
       (cond
        ((command-modifier-pressed? Key_backspace)
-        (command-pop-char!))
+        (command-apply-mutator! command-pop-char!))
        ((command-modifier-pressed? Key_return)
-        (Game_log (command-execute (int-list->string command-input)))
-        (command-clear!)))
+        (set! command-displaying-result #t)
+        (let* ((result-str (command-execute (int-list->string command-input)))
+               (results-length (string-length result-str)))
+          (command-clear!)
+          (let push-results ((index 0))
+            (cond
+             ((equal? index results-length)
+              '())
+             (else
+              (command-push-char!
+               (char->integer (string-ref result-str index)) window-info)
+              (push-results (+ index 1))))))))
       (command-get-input
        (lambda (unicode-char)
          (if (and (not (equal? unicode-char 8))
                   (not (equal? unicode-char 10)))
-             (command-push-char! unicode-char window-info))))
+             (command-apply-mutator!
+              (lambda ()
+                (command-push-char! unicode-char window-info))))))
       (if (command-modifier-pressed? Key_esc)
           (begin
             (command-clear!)

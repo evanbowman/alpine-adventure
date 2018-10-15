@@ -2,7 +2,11 @@
 
 namespace Game {
 
+
 void CollisionDetector::update() {}
 
+
 void CollisionDetector::track(ObjectPtr object) {}
+
+
 }

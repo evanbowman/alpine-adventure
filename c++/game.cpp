@@ -4,12 +4,15 @@
 #include <iostream>
 #include <thread>
 
+
 namespace Game {
+
 
 void ContextDeleter::operator()(Context * p) {
     delete p;
     gContext = nullptr;
 }
+
 
 ContextPtr initialize() {
     if (gContext) {
@@ -22,6 +25,7 @@ ContextPtr initialize() {
     gContext = ctx.get();
     return ctx;
 }
+
 
 void update() {
     using namespace std::chrono;
@@ -36,11 +40,13 @@ void update() {
     std::this_thread::sleep_for(logicUpdateLimit - logicUpdateDelta);
 }
 
+
 ObjectPtr makeObject() {
     auto obj = std::make_shared<Object>();
     gContext->objects_.enter([&](ObjectList & list) { list.push_front(obj); });
     return obj;
 }
+
 
 ObjectPtr makeWidjet() {
     auto widjet = std::make_shared<Object>();
@@ -48,6 +54,7 @@ ObjectPtr makeWidjet() {
         [&](ObjectList & list) { list.push_front(widjet); });
     return widjet;
 }
+
 
 static void windowEventLoop(VideoContext & vidCtx) {
     sf::Event event;
@@ -79,6 +86,7 @@ static void windowEventLoop(VideoContext & vidCtx) {
     }
 }
 
+
 void drawObjects(VideoContext & vidCtx) {
     vidCtx.shadowMap_.clear();
     vidCtx.shadowMap_.setView(gContext->camera_.getOverworldView());
@@ -106,6 +114,7 @@ void drawObjects(VideoContext & vidCtx) {
     vidCtx.lightingShader.setUniform("world", vidCtx.world_.getTexture());
     vidCtx.window_.draw(shadowMapSprite, &vidCtx.lightingShader);
 }
+
 
 void drawWidjets(VideoContext & vidCtx) {
     const sf::View windowView = gContext->camera_.getWindowView();
@@ -135,6 +144,7 @@ void drawWidjets(VideoContext & vidCtx) {
     displayQueue.clear();
 }
 
+
 void display(VideoContext & vidCtx) {
     gContext->videoRequests_.enter([&vidCtx](VideoRequestVector & reqs) {
         for (auto & req : reqs) {
@@ -149,6 +159,7 @@ void display(VideoContext & vidCtx) {
     vidCtx.window_.display();
 }
 
+
 void runVideoLoop() {
     VideoContext vidCtx;
     while (vidCtx.window_.isOpen()) {
@@ -156,5 +167,8 @@ void runVideoLoop() {
     }
 }
 
+
 bool isRunning() { return gContext->running_; }
+
+
 }
