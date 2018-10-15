@@ -47,12 +47,13 @@
     bar))
 
 
-(define (command-push-char! unicode-char window-info)
+(define (command-push-char! unicode-char color window-info)
   (set! command-input (cons unicode-char command-input))
   (let ((glyph (command-get-display-widjet))
         (char-width 9))
     (Object_setFace glyph spr-glyphs)
     (Object_setVisible glyph #t)
+    (Object_setFaceColor glyph color)
     (Object_setFaceSubrect glyph (vector 0 0 char-width 18))
     (Object_setFaceKeyframe glyph (- unicode-char 32))
     (Object_setPosition glyph (+ (* (length command-display-list) char-width) 4.0) 4.0)
@@ -152,7 +153,9 @@
               '())
              (else
               (command-push-char!
-               (char->integer (string-ref result-str index)) window-info)
+               (char->integer (string-ref result-str index))
+               #(180 180 180 255)
+               window-info)
               (push-results (+ index 1))))))))
       (command-get-input
        (lambda (unicode-char)
@@ -160,7 +163,7 @@
                   (not (equal? unicode-char 10)))
              (command-apply-mutator!
               (lambda ()
-                (command-push-char! unicode-char window-info))))))
+                (command-push-char! unicode-char #(255 255 255 255) window-info))))))
       (if (command-modifier-pressed? Key_esc)
           (begin
             (command-clear!)
