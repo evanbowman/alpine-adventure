@@ -1,9 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <future>
 #include <SFML/Graphics.hpp>
-
+#include <future>
+#include <vector>
 
 struct VideoContext {
     sf::VideoMode videoMode_;
@@ -12,8 +11,9 @@ struct VideoContext {
     sf::RenderTexture world_;
     sf::Shader lightingShader;
 
-    VideoContext() : videoMode_(sf::VideoMode::getDesktopMode()),
-                     window_(videoMode_, "Test", sf::Style::Fullscreen) {
+    VideoContext()
+        : videoMode_(sf::VideoMode::getDesktopMode()),
+          window_(videoMode_, "Test", sf::Style::Fullscreen) {
         shadowMap_.create(videoMode_.width, videoMode_.height);
         world_.create(videoMode_.width, videoMode_.height);
         window_.setMouseCursorVisible(false);

@@ -1,36 +1,29 @@
 #pragma once
 
-#include <list>
 #include <SFML/Graphics.hpp>
+#include <list>
 
-#include "types.hpp"
 #include "camera.hpp"
 #include "object.hpp"
-
+#include "types.hpp"
 
 namespace Game {
 
-    struct Context;
-    struct ContextDeleter { void operator()(Context *p); };
-    using ContextPtr = std::unique_ptr<Context, ContextDeleter>;
+struct Context;
+struct ContextDeleter {
+    void operator()(Context * p);
+};
+using ContextPtr = std::unique_ptr<Context, ContextDeleter>;
 
+ContextPtr initialize();
 
-    ContextPtr initialize();
+void runUpdateLoop();
 
+void runVideoLoop();
 
-    void runUpdateLoop();
+bool isRunning();
 
+ObjectPtr makeObject();
 
-    void runVideoLoop();
-
-
-    bool isRunning();
-
-
-    ObjectPtr makeObject();
-
-
-    ObjectPtr makeWidjet();
-
-
+ObjectPtr makeWidjet();
 }

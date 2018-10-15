@@ -18,14 +18,14 @@
 
 
 (define vignette-overlay
-  ((lambda ()
-     (let ((obj (Game_makeWidjet)))
-       (Object_setFace obj spr-vignette)
-       (Object_setFaceScale obj
-                            (/ (vector-ref window-info 2) 450.0)
-                            (/ (vector-ref window-info 3) 450.0))
-       (Object_setFaceColor obj #(255 255 255 181))
-       obj))))
+  (let ((obj (Game_makeWidjet)))
+    (Object_setFace obj spr-vignette)
+    (Object_setFaceScale obj
+                         (/ (vector-ref window-info 2) 450.0)
+                         (/ (vector-ref window-info 3) 450.0))
+    (Object_setFaceColor obj #(255 255 255 181))
+    (Object_setZOrder obj 1)
+    obj))
 
 
 (define (player)

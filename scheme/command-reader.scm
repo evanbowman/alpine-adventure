@@ -17,6 +17,7 @@
 
 
 (define (command-recycle-display-widjet widjet)
+  (Object_setVisible widjet #f)
   (set! command-display-widjet-pool (cons widjet command-display-widjet-pool)))
 
 
@@ -35,20 +36,27 @@
 (define command-input '())
 (define command-display-list '())
 (define command-text-bar
-  ((lambda ()
-     (let ((bar (Game_makeWidjet))
-           (window-width (vector-ref window-info 2))
-           (window-height (vector-ref window-info 2)))
-       (Object_setFace bar spr-pixel)
-       (Object_setVisible bar #f)
-       (Object_setFaceColor bar #(128 128 128 128))
-       (Object_setFaceScale bar window-width 32.0)))))
+  (let ((bar (Game_makeWidjet))
+        (window-width (vector-ref window-info 2))
+        (window-height (vector-ref window-info 2)))
+    (Object_setFace bar spr-pixel)
+    (Object_setVisible bar #f)
+    (Object_setFaceColor bar #(0 0 0 100))
+    (Object_setFaceScale bar window-width 28.0)
+    (Object_setZOrder bar 2)
+    bar))
 
 
 (define (command-push-char! unicode-char window-info)
   (set! command-input (cons unicode-char command-input))
-  (let ((glyph (command-get-display-widjet)))
-    ;; TODO: set properties for glyph
+  (let ((glyph (command-get-display-widjet))
+        (char-width 9))
+    (Object_setFace glyph spr-glyphs)
+    (Object_setVisible glyph #t)
+    (Object_setFaceSubrect glyph (vector 0 0 char-width 18))
+    (Object_setFaceKeyframe glyph (- unicode-char 32))
+    (Object_setPosition glyph (+ (* (length command-display-list) char-width) 4.0) 4.0)
+    (Object_setZOrder glyph 3)
     (set! command-display-list (cons glyph command-display-list))))
 
 
@@ -127,8 +135,7 @@
        (lambda (unicode-char)
          (if (and (not (equal? unicode-char 8))
                   (not (equal? unicode-char 10)))
-             (command-push-char! unicode-char window-info)
-             (int-list->string command-input))))
+             (command-push-char! unicode-char window-info))))
       (if (command-modifier-pressed? Key_esc)
           (begin
             (command-clear!)

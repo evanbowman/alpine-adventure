@@ -1,7 +1,6 @@
 #include "textureDB.hpp"
 
-
-sf::Texture* TextureDB::load(const std::string& name, VideoContext& vidCtx) {
+sf::Texture * TextureDB::load(const std::string & name, VideoContext & vidCtx) {
     std::lock_guard<std::mutex> guard(texturesMutex_);
     auto inserted = textures_.insert({name, sf::Texture{}});
     if (inserted.second) {
@@ -15,8 +14,7 @@ sf::Texture* TextureDB::load(const std::string& name, VideoContext& vidCtx) {
     return nullptr;
 }
 
-
-sf::Texture* TextureDB::find(const std::string& name) {
+sf::Texture * TextureDB::find(const std::string & name) {
     std::lock_guard<std::mutex> guard(texturesMutex_);
     auto found = textures_.find(name);
     if (found not_eq textures_.end()) {
