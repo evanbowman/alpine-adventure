@@ -1,3 +1,9 @@
+;;;
+;;; boot.ebl
+;;;
+;;; Misc. startup related code.
+;;;
+
 
 (engine::log "starting up...")
 
@@ -22,7 +28,6 @@
 
 
 (def window-info (engine::describe-window))
-
 
 
 (def vignette-overlay

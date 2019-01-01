@@ -1,4 +1,12 @@
+;;;
+;;; main.ebl
+;;;
+;;; Entry point for the program.
+;;;
+
 (load "ebl/boot.ebl")
+(load "../lisp/lisp/stdlib.ebl")
+
 
 (defn player ()
   (let ((obj (engine::make-object)))
