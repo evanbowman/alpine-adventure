@@ -1,0 +1,21 @@
+(load "ebl/boot.ebl")
+
+(defn player ()
+  (let ((obj (engine::make-object)))
+    (engine::set-face obj img::test-1)
+    (engine::set-shadow obj img::test-2)))
+
+
+(def test (player))
+
+(engine::set-camera-target test)
+
+
+((lambda ()
+   (if (engine::is-running?)
+       (begin
+         (engine::update)
+         (recur)))))
+
+
+(engine::log "program completed normally")

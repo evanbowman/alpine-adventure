@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(alpine)
 
 link_directories("/usr/local/lib/")
+include_directories("/usr/local/include")
 
 file(GLOB_RECURSE SOURCES "c++/*.cpp")
 file(GLOB_RECURSE HEADERS "c++/*.hpp")
@@ -20,8 +21,7 @@ target_link_libraries(alpine sfml-graphics)
 target_link_libraries(alpine sfml-system)
 target_link_libraries(alpine sfml-audio)
 target_link_libraries(alpine pthread)
-target_link_libraries(alpine chibi-scheme)
-
+target_link_libraries(alpine ebl-lisp)
 
 add_custom_target(clang-format
   COMMAND clang-format --style=file -i ${SOURCES} ${HEADERS}

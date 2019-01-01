@@ -1,0 +1,35 @@
+
+(engine::log "starting up...")
+
+(engine::set-vsync-enabled true)
+(engine::set-framerate-limit 60)
+
+(engine::log "configuration complete")
+
+
+(namespace img
+  (defn init (name)
+    (engine::create-texture (string "texture/" name)))
+
+  (def test-1 (init "Sprite-0001.png"))
+  (def test-2 (init "Sprite-0002.png"))
+  (def pixel (init "pixel.png"))
+  (def glyphs (init "ubuntu-mono-18.png"))
+  (def vignette (init "vignette.png")))
+
+
+(engine::log "done loading textures")
+
+
+(def window-info (engine::describe-window))
+
+
+
+(def vignette-overlay
+     (let ((obj (engine::make-widjet)))
+       (engine::set-face obj img::vignette)
+       (engine::set-zorder obj 1)
+       (engine::set-face-color obj '(255 255 255 181))
+       (engine::set-face-scale obj
+                               (/ (car (cdr (cdr window-info))) 450.0)
+                               (/ (car (cdr (cdr (cdr window-info)))) 450.0))))

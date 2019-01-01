@@ -1,61 +1,52 @@
 #include "script.hpp"
-#include <chibi/eval.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
+// FIXME!!!
+#include "../../lisp/lib/lisp.hpp"
+#include "../../lisp/lib/persistent.hpp"
 
 struct ScriptEngine::State {
-    sexp ctx, env;
+    lisp::Context context_;
 };
 
 ScriptEngine::ScriptEngine() : state_(new State) {
-    state_->ctx = sexp_make_eval_context(nullptr, nullptr, nullptr, 0, 0);
-    state_->env = sexp_load_standard_env(state_->ctx, nullptr, SEXP_SEVEN);
-    sexp_load_standard_ports(state_->ctx, nullptr, stdin, stdout, stderr, 0);
-}
-
-ScriptEngine::TypeId ScriptEngine::registerType(const std::string & name) {
-    sexp_gc_var2(namestr, type);
-    namestr = sexp_c_string(state_->ctx, name.c_str(), name.length());
-    type = sexp_register_c_type(state_->ctx, namestr, nullptr);
-    if (sexp_exceptionp(type)) {
-        throw std::runtime_error("failed to register type: " + name);
-    }
-    return sexp_type_tag(type);
+    auto& env = state_->context_.topLevel();
+    env.openDLL("libfs");
+    env.openDLL("libsys");
 }
 
 void ScriptEngine::run(const String & script) {
-    sexp_gc_var2(result, mainfile);
-    mainfile = sexp_c_string(state_->ctx, script.c_str(), -1);
-    result = sexp_load(state_->ctx, mainfile, nullptr);
-    if (sexp_exceptionp(result)) {
-        printf("\n[[ Exception ]]");
-        printf("\n     source: ");
-        sexp_write(state_->ctx, sexp_exception_source(result),
-                   sexp_current_output_port(state_->ctx));
-        printf("\n    message: ");
-        sexp_write(state_->ctx, sexp_exception_message(result),
-                   sexp_current_output_port(state_->ctx));
-        printf("\n  irritants: ");
-        sexp_write(state_->ctx, sexp_exception_irritants(result),
-                   sexp_current_output_port(state_->ctx));
-        printf("\n  procedure: ");
-        sexp_write(state_->ctx, sexp_exception_procedure(result),
-                   sexp_current_output_port(state_->ctx));
-        printf("\n\n");
-        exit(1); // FIXME
+    auto& env = state_->context_.topLevel();
+    try {
+        std::ifstream t(script);
+        std::stringstream buffer;
+        buffer << t.rdbuf();
+        env.exec(buffer.str());
+    } catch (const std::exception& ex) {
+        std::cout << "Error:\n" << ex.what() << std::endl;
     }
 }
 
 ScriptEngine::~ScriptEngine() {
-    sexp_destroy_context(state_->ctx);
     delete state_;
 }
 
-void ScriptEngine::exportFunction(const String & sym, int argc,
+void ScriptEngine::exportFunction(const String & sym, const String & nameSpace,
+                                  const String & docstring, int argc,
                                   void * (*proc)()) {
-    sexp_define_foreign(state_->ctx, state_->env, sym.c_str(), argc, proc);
+    auto& env = state_->context_.topLevel();
+    lisp::Persistent<lisp::String> doc(env, env.create<lisp::String>(docstring.c_str(),
+                                                                     docstring.length()));
+    const auto param = reinterpret_cast<lisp::ObjectPtr (*)(lisp::Environment&,
+                                                            const lisp::Arguments&)>(proc);
+    auto fn = env.create<lisp::Function>(doc.get(), size_t(0), param);
+    env.setGlobal(sym, nameSpace, fn);
 }
 
-void ScriptEngine::setGlobal(const String & sym, unsigned value) {
-    sexp_env_define(state_->ctx, state_->env,
-                    sexp_intern(state_->ctx, sym.c_str(), sym.length()),
-                    sexp_make_integer(state_->ctx, value));
+void ScriptEngine::setGlobal(const String & sym, const String & nameSpace, unsigned value) {
+    auto& env = state_->context_.topLevel();
+    auto num = env.create<lisp::Integer>((lisp::Integer::Rep)value);
+    env.setGlobal(sym, nameSpace, num);
 }
