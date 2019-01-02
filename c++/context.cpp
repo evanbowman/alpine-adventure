@@ -10,4 +10,4 @@ Context::Context()
       logfile_("logfile.txt"), running_(true), textChannelActive_(false) {}
 
 Context * gContext;
-}
+} // namespace Game

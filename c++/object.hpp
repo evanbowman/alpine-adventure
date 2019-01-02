@@ -48,4 +48,4 @@ private:
 };
 
 using ObjectPtr = std::shared_ptr<Object>;
-}
+} // namespace Game

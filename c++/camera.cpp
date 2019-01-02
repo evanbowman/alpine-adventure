@@ -34,4 +34,4 @@ void Camera::update(Microseconds delta) {
     windowView_.setCenter(windowSize_.x / 2.f + scaledCameraOffset.x,
                           windowSize_.y / 2.f + scaledCameraOffset.y);
 }
-}
+} // namespace Game

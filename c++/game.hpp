@@ -26,4 +26,4 @@ bool isRunning();
 ObjectPtr makeObject();
 
 ObjectPtr makeWidjet();
-}
+} // namespace Game

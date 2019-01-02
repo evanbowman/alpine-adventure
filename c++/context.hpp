@@ -66,4 +66,4 @@ struct Context {
 };
 
 extern Context * gContext;
-}
+} // namespace Game

@@ -34,4 +34,4 @@ private:
     sf::IntRect subRect_;
     size_t keyframe_;
 };
-}
+} // namespace Game

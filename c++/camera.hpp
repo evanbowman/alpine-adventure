@@ -28,4 +28,4 @@ private:
     std::shared_ptr<Object> target_;
     sf::Vector2f currentPosition_;
 };
-}
+} // namespace Game

@@ -103,7 +103,6 @@ void drawObjects(VideoContext & vidCtx) {
                 vidCtx.shadowMap_.draw(shadow->alias());
             }
         }
-
     });
     vidCtx.world_.display();
     vidCtx.shadowMap_.display();
@@ -171,4 +170,4 @@ void runVideoLoop() {
 bool isRunning() { return gContext->running_; }
 
 
-}
+} // namespace Game

@@ -13,13 +13,11 @@ public:
 
     void run(const String & script);
 
-    void exportFunction(const String & sym,
-                        const String & nameSpace,
-                        const String & docstring,
-                        int argc,
-                        void * (*proc)());
+    void exportFunction(const String & sym, const String & nameSpace,
+                        const String & docstring, int argc, void * (*proc)());
 
-    void setGlobal(const String & sym, const String & nameSpace, unsigned value);
+    void setGlobal(const String & sym, const String & nameSpace,
+                   unsigned value);
 
 private:
     struct State;

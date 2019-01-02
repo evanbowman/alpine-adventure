@@ -6,4 +6,4 @@ class Collider {
 public:
     // ...
 };
-}
+} // namespace Game

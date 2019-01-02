@@ -17,218 +17,237 @@ void update();
 
 
 struct BuiltinFunctionInfo {
-    const char* name;
-    const char* docstring;
+    const char * name;
+    const char * docstring;
     size_t requiredArgs;
     lisp::CFunction impl;
 };
 
 static const BuiltinFunctionInfo functionExports[] = {
-        {"update", "[] -> run the update step for engine builtins", 0,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             Game::update();
-             return env.getNull();
-         }},
-        {"is-running?", "[] -> true if the engine\'s window is open", 0,
-         [](lisp::Environment& env, const lisp::Arguments& args) ->
-         lisp::ObjectPtr {
-             return env.getBool(Game::isRunning());
-         }},
-        {"make-object", "[] -> newly created engine entity", 0,
-         [](lisp::Environment& env, const lisp::Arguments& args) ->
-         lisp::ObjectPtr {
-             return env.create<lisp::RawPointer>(Game::makeObject().get());
-         }},
-        {"make-widjet", "[] -> newly created lightweight ui object", 0,
-         [](lisp::Environment& env, const lisp::Arguments& args) -> lisp::ObjectPtr {
-             return env.create<lisp::RawPointer>(Game::makeWidjet().get());
-         }},
-        {"set-zorder", "[obj z] -> obj, with z-order updated to z", 2,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             ((Object*)lisp::checkedCast<lisp::RawPointer>(args[0])->value())
-                 ->setZOrder(lisp::checkedCast<lisp::Integer>(args[1])->value());
-             return args[0];
-         }},
-        {"set-position", "[obj x-pos y-pos] -> obj, with new position", 3,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             Object* object =
-                 (Object*)lisp::checkedCast<lisp::RawPointer>(args[0])->value();
-             object->setPosition({(float)lisp::checkedCast<lisp::Float>(args[1])->value(),
-                                  (float)lisp::checkedCast<lisp::Float>(args[2])->value()});
-             return args[0];
-         }},
-        {"set-face", "[obj spr] -> obj, with visual representation set to spr", 2,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             auto tptr = (sf::Texture*)lisp::checkedCast<lisp::RawPointer>(args[1])->value();
-             auto spr = make_unique<Sprite>(*tptr);
-             ((Object*)lisp::checkedCast<lisp::RawPointer>(args[0])
-              ->value())->setFace(std::move(spr));
-             return args[0];
-         }},
-        {"set-shadow", "[obj spr] -> obj, with visual shadow set to spr", 2,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             auto tptr = (sf::Texture*)lisp::checkedCast<lisp::RawPointer>(args[1])->value();
-             auto spr = make_unique<Sprite>(*tptr);
-             ((Object*)lisp::checkedCast<lisp::RawPointer>(args[0])
-              ->value())->setShadow(std::move(spr));
-             return args[0];
-         }},
-        {"set-face-color",
-         "[obj c] -> obj, with face color set to rgba values in list c", 2,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             if (auto spr = ((Object*)lisp::checkedCast<lisp::RawPointer>(args[0])->value())->getFace()) {
-                 auto head = lisp::checkedCast<lisp::Pair>(args[1]);
-                 spr->setColor({
-                         (uint8_t)lisp::checkedCast<lisp::Integer>(lisp::listRef(head, 0))->value(),
-                         (uint8_t)lisp::checkedCast<lisp::Integer>(lisp::listRef(head, 1))->value(),
-                         (uint8_t)lisp::checkedCast<lisp::Integer>(lisp::listRef(head, 2))->value(),
-                         (uint8_t)lisp::checkedCast<lisp::Integer>(lisp::listRef(head, 3))->value()
-                     });
-             } else {
-                 std::cout << "object has no face" << std::endl;
-             }
-             return args[0];
-         }},
-        {"set-face-scale", "[obj x-scl y-scl] -> obj, with rescaled face", 3,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             if (auto spr = ((Object*)lisp::checkedCast<lisp::RawPointer>(args[0])
-                             ->value())->getFace()) {
-                 spr->setScale({(float)lisp::checkedCast<lisp::Float>(args[1])->value(),
-                                (float)lisp::checkedCast<lisp::Float>(args[2])->value()});
-             } else {
-                 std::cout << "object has no face" << std::endl;
-             }
-             return args[0];
-         }},
-        // {"Object_setFaceSubrect", 2,
-        //  [](lisp::Environment& env, const lisp::Arguments& args) {
-        //      EXPECT_CUSTOM(obj, typeids::object);
-        //      EXPECT_VECTOR(rect);
-        //      if (auto spr = ((Object*)sexp_cpointer_value(obj))->getFace()) {
-        //          spr->setSubRect({
-        //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_ZERO)),
-        //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_ONE)),
-        //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_TWO)),
-        //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_THREE))
-        //              });
-        //      } else {
-        //          std::cout << "object has no face" << std::endl;
-        //      }
-        //      return obj;
-        //  }},
-        // {"Object_setFaceKeyframe", 2,
-        //  [](lisp::Environment& env, const lisp::Arguments& args) {
-        //      EXPECT_CUSTOM(obj, typeids::object); EXPECT_EXACT(frame);
-        //      if (auto spr = ((Object*)sexp_cpointer_value(obj))->getFace()) {
-        //          spr->setKeyframe(sexp_uint_value(frame));
-        //      } else {
-        //          std::cout << "object has no face" << std::endl;
-        //      }
-        //      return obj;
-        //  }},
-        // {"Object_setVisible", 2,
-        //  [](lisp::Environment& env, const lisp::Arguments& args) {
-        //      EXPECT_CUSTOM(obj, typeids::object); EXPECT_BOOL(visible);
-        //      ((Object*)sexp_cpointer_value(obj))
-        //          ->setVisible(sexp_unbox_boolean(visible));
-        //      return obj;
-        //  }},
-        {"describe-window", "[] -> list of (x-center y-center width height)", 0,
-         [](lisp::Environment& env, const lisp::Arguments&) {
-             const auto& view = gContext->camera_.getOverworldView();
-             auto center = view.getCenter();
-             auto size = view.getSize();
-             lisp::ListBuilder builder(env, env.create<lisp::Float>(center.x));
-             builder.pushBack(env.create<lisp::Float>(center.y));
-             builder.pushBack(env.create<lisp::Float>(size.x));
-             builder.pushBack(env.create<lisp::Float>(size.y));
-             return builder.result();
-         }},
-        {"set-camera-target", "[obj] -> update camera to track obj", 1,
-         [](lisp::Environment& env, const lisp::Arguments& args) -> lisp::ObjectPtr {
-             auto object = lisp::checkedCast<lisp::RawPointer>(args[0])->value();
-             Game::gContext->objects_.enter([&](ObjectList& list) {
-                 for (auto& obj : list) {
-                     if (obj.get() == object) {
-                         Game::gContext->camera_.setTarget(obj);
-                         return;
-                     }
+    {"update", "[] -> run the update step for engine builtins", 0,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         Game::update();
+         return env.getNull();
+     }},
+    {"is-running?", "[] -> true if the engine\'s window is open", 0,
+     [](lisp::Environment & env, const lisp::Arguments & args)
+         -> lisp::ObjectPtr { return env.getBool(Game::isRunning()); }},
+    {"make-object", "[] -> newly created engine entity", 0,
+     [](lisp::Environment & env,
+        const lisp::Arguments & args) -> lisp::ObjectPtr {
+         return env.create<lisp::RawPointer>(Game::makeObject().get());
+     }},
+    {"make-widjet", "[] -> newly created lightweight ui object", 0,
+     [](lisp::Environment & env,
+        const lisp::Arguments & args) -> lisp::ObjectPtr {
+         return env.create<lisp::RawPointer>(Game::makeWidjet().get());
+     }},
+    {"set-zorder", "[obj z] -> obj, with z-order updated to z", 2,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         ((Object *)lisp::checkedCast<lisp::RawPointer>(args[0])->value())
+             ->setZOrder(lisp::checkedCast<lisp::Integer>(args[1])->value());
+         return args[0];
+     }},
+    {"set-position", "[obj x-pos y-pos] -> obj, with new position", 3,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         Object * object =
+             (Object *)lisp::checkedCast<lisp::RawPointer>(args[0])->value();
+         object->setPosition(
+             {(float)lisp::checkedCast<lisp::Float>(args[1])->value(),
+              (float)lisp::checkedCast<lisp::Float>(args[2])->value()});
+         return args[0];
+     }},
+    {"set-face", "[obj spr] -> obj, with visual representation set to spr", 2,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         auto tptr = (sf::Texture *)lisp::checkedCast<lisp::RawPointer>(args[1])
+                         ->value();
+         auto spr = make_unique<Sprite>(*tptr);
+         ((Object *)lisp::checkedCast<lisp::RawPointer>(args[0])->value())
+             ->setFace(std::move(spr));
+         return args[0];
+     }},
+    {"set-shadow", "[obj spr] -> obj, with visual shadow set to spr", 2,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         auto tptr = (sf::Texture *)lisp::checkedCast<lisp::RawPointer>(args[1])
+                         ->value();
+         auto spr = make_unique<Sprite>(*tptr);
+         ((Object *)lisp::checkedCast<lisp::RawPointer>(args[0])->value())
+             ->setShadow(std::move(spr));
+         return args[0];
+     }},
+    {"set-face-color",
+     "[obj c] -> obj, with face color set to rgba values in list c", 2,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         if (auto spr = ((Object *)lisp::checkedCast<lisp::RawPointer>(args[0])
+                             ->value())
+                            ->getFace()) {
+             auto head = lisp::checkedCast<lisp::Pair>(args[1]);
+             spr->setColor({(uint8_t)lisp::checkedCast<lisp::Integer>(
+                                lisp::listRef(head, 0))
+                                ->value(),
+                            (uint8_t)lisp::checkedCast<lisp::Integer>(
+                                lisp::listRef(head, 1))
+                                ->value(),
+                            (uint8_t)lisp::checkedCast<lisp::Integer>(
+                                lisp::listRef(head, 2))
+                                ->value(),
+                            (uint8_t)lisp::checkedCast<lisp::Integer>(
+                                lisp::listRef(head, 3))
+                                ->value()});
+         } else {
+             std::cout << "object has no face" << std::endl;
+         }
+         return args[0];
+     }},
+    {"set-face-scale", "[obj x-scl y-scl] -> obj, with rescaled face", 3,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         if (auto spr = ((Object *)lisp::checkedCast<lisp::RawPointer>(args[0])
+                             ->value())
+                            ->getFace()) {
+             spr->setScale(
+                 {(float)lisp::checkedCast<lisp::Float>(args[1])->value(),
+                  (float)lisp::checkedCast<lisp::Float>(args[2])->value()});
+         } else {
+             std::cout << "object has no face" << std::endl;
+         }
+         return args[0];
+     }},
+    // {"Object_setFaceSubrect", 2,
+    //  [](lisp::Environment& env, const lisp::Arguments& args) {
+    //      EXPECT_CUSTOM(obj, typeids::object);
+    //      EXPECT_VECTOR(rect);
+    //      if (auto spr = ((Object*)sexp_cpointer_value(obj))->getFace()) {
+    //          spr->setSubRect({
+    //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_ZERO)),
+    //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_ONE)),
+    //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_TWO)),
+    //                  (int)sexp_uint_value(sexp_vector_ref(rect, SEXP_THREE))
+    //              });
+    //      } else {
+    //          std::cout << "object has no face" << std::endl;
+    //      }
+    //      return obj;
+    //  }},
+    {"set-face-keyframe", "[obj frame] -> obj with updated keyframe", 2,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         if (auto spr = ((Object *)lisp::checkedCast<lisp::RawPointer>(args[0])
+                             ->value())
+                            ->getFace()) {
+             spr->setKeyframe(
+                 lisp::checkedCast<lisp::Integer>(args[1])->value());
+         } else {
+             std::cout << "object has no face" << std::endl;
+         }
+         return args[0];
+     }},
+    {"set-visible", "[obj bool] -> obj, with visibility set to bool", 2,
+     [](lisp::Environment &, const lisp::Arguments & args) {
+         ((Object *)lisp::checkedCast<lisp::RawPointer>(args[0])->value())
+             ->setVisible(lisp::checkedCast<lisp::Boolean>(args[1])->value());
+         return args[0];
+     }},
+    {"describe-window", "[] -> list of (x-center y-center width height)", 0,
+     [](lisp::Environment & env, const lisp::Arguments &) {
+         const auto & view = gContext->camera_.getOverworldView();
+         auto center = view.getCenter();
+         auto size = view.getSize();
+         lisp::ListBuilder builder(env, env.create<lisp::Float>(center.x));
+         builder.pushBack(env.create<lisp::Float>(center.y));
+         builder.pushBack(env.create<lisp::Float>(size.x));
+         builder.pushBack(env.create<lisp::Float>(size.y));
+         return builder.result();
+     }},
+    {"set-camera-target", "[obj] -> update camera to track obj", 1,
+     [](lisp::Environment & env,
+        const lisp::Arguments & args) -> lisp::ObjectPtr {
+         auto object = lisp::checkedCast<lisp::RawPointer>(args[0])->value();
+         Game::gContext->objects_.enter([&](ObjectList & list) {
+             for (auto & obj : list) {
+                 if (obj.get() == object) {
+                     Game::gContext->camera_.setTarget(obj);
+                     return;
                  }
-             });
-             return env.getNull();
-         }},
-        {"key-pressed?", "[key] -> true if key is pressed", 1,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             const auto sel =
-                 (sf::Keyboard::Key)lisp::checkedCast<lisp::Integer>(args[0])->value();
-             const bool pressed = Game::gContext->keyStates_.isPressed(sel);
-             return env.getBool(pressed);
-         }},
-        {"create-texture", "[path] -> new texture, by loading the image from path", 1,
-         [](lisp::Environment& env, const lisp::Arguments& args) -> lisp::ObjectPtr {
-             std::string name(lisp::checkedCast<lisp::String>(args[0])->toAscii());
-             auto fut = Game::gContext->videoRequest([&name](VideoContext& vidCtx) {
+             }
+         });
+         return env.getNull();
+     }},
+    {"key-pressed?", "[key] -> true if key is pressed", 1,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         const auto sel =
+             (sf::Keyboard::Key)lisp::checkedCast<lisp::Integer>(args[0])
+                 ->value();
+         const bool pressed = Game::gContext->keyStates_.isPressed(sel);
+         return env.getBool(pressed);
+     }},
+    {"create-texture", "[path] -> new texture, by loading the image from path",
+     1,
+     [](lisp::Environment & env,
+        const lisp::Arguments & args) -> lisp::ObjectPtr {
+         std::string name(lisp::checkedCast<lisp::String>(args[0])->toAscii());
+         auto fut =
+             Game::gContext->videoRequest([&name](VideoContext & vidCtx) {
                  return gContext->textureDB_.load(name, vidCtx);
              });
-             return env.create<lisp::RawPointer>(fut.get());
-         }},
-        {"log", "[str] -> write str to engine log", 1,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             gContext->logfile_ <<
-                 lisp::checkedCast<lisp::String>(args[0])->toAscii() << std::endl;
-             return env.getNull();
-         }},
-        {"set-framerate-limit", "[num] -> update engine framerate to num", 1,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             const auto lim = lisp::checkedCast<lisp::Integer>(args[0])->value();
-             auto fut = Game::gContext->videoRequest([lim](VideoContext& vidCtx) {
-                 vidCtx.window_.setFramerateLimit(lim);
-                 return nullptr;
-             });
-             fut.wait();
-             return env.getNull();
-         }},
-        {"set-vsync-enabled", "[bool] -> update vsync to bool", 1,
-         [](lisp::Environment& env, const lisp::Arguments& args) {
-             const bool val = lisp::checkedCast<lisp::Boolean>(args[0])->value();
-             auto fut = Game::gContext->videoRequest([val](VideoContext& vidCtx) {
-                 vidCtx.window_.setVerticalSyncEnabled(val);
-                 return nullptr;
-             });
-             fut.wait();
-             return env.getNull();
-         }},
-        // {"Game_setTextChannelActive", 1,
-        //  [](lisp::Environment& env, const lisp::Arguments& args) {
-        //      EXPECT_BOOL(enabled);
-        //      gContext->textChannelActive_ = sexp_unbox_boolean(enabled);
-        //      return SEXP_NULL;
-        //  }},
-        // {"Game_pollTextChannel", 0,
-        //  [](lisp::Environment& env, const lisp::Arguments& args) {
-        //      unsigned result;
-        //      bool resultSet = false;
-        //      gContext->textChannel_.enter([&](TextChannel& t) {
-        //          if (not t.empty()) {
-        //              result = t.front();
-        //              t.pop_front();
-        //              resultSet = true;
-        //          }
-        //      });
-        //      if (resultSet) {
-        //          return sexp_make_unsigned_integer(ctx, result);
-        //      } else {
-        //          return SEXP_FALSE;
-        //      }
-        //  }},
-        // {"Game_sleep", 1,
-        //  [](lisp::Environment& env, const lisp::Arguments& args) {
-        //      EXPECT_EXACT(duration);
-        //      const auto val = sexp_uint_value(duration);
-        //      std::this_thread::sleep_for(std::chrono::microseconds(val));
-        //      return SEXP_NULL;
-        //  }}
-    };
+         return env.create<lisp::RawPointer>(fut.get());
+     }},
+    {"log", "[str] -> write str to engine log", 1,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         gContext->logfile_
+             << lisp::checkedCast<lisp::String>(args[0])->toAscii()
+             << std::endl;
+         return env.getNull();
+     }},
+    {"set-framerate-limit", "[num] -> update engine framerate to num", 1,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         const auto lim = lisp::checkedCast<lisp::Integer>(args[0])->value();
+         auto fut = Game::gContext->videoRequest([lim](VideoContext & vidCtx) {
+             vidCtx.window_.setFramerateLimit(lim);
+             return nullptr;
+         });
+         fut.wait();
+         return env.getNull();
+     }},
+    {"set-vsync-enabled", "[bool] -> update vsync to bool", 1,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         const bool val = lisp::checkedCast<lisp::Boolean>(args[0])->value();
+         auto fut = Game::gContext->videoRequest([val](VideoContext & vidCtx) {
+             vidCtx.window_.setVerticalSyncEnabled(val);
+             return nullptr;
+         });
+         fut.wait();
+         return env.getNull();
+     }},
+    {"set-text-channel-active", "[bool] -> enable/disable text channel", 1,
+     [](lisp::Environment & env, const lisp::Arguments & args) {
+         gContext->textChannelActive_ =
+             lisp::checkedCast<lisp::Boolean>(args[0])->value();
+         return env.getNull();
+     }},
+    {"Game_pollTextChannel",
+     "[] -> char from the text channel, or false if empty", 0,
+     [](lisp::Environment & env, const lisp::Arguments &) -> lisp::ObjectPtr {
+         unsigned result;
+         bool resultSet = false;
+         gContext->textChannel_.enter([&](TextChannel & t) {
+             if (not t.empty()) {
+                 result = t.front();
+                 t.pop_front();
+                 resultSet = true;
+             }
+         });
+         if (resultSet) {
+             lisp::Character::Rep bytes;
+             static_assert(sizeof result == sizeof bytes,
+                           "utf8 won\'t fit in lisp::Character!?");
+             for (size_t i = 0; i < sizeof result; ++i) {
+                 bytes[i] = ((uint8_t *)&result)[i];
+             }
+             return env.create<lisp::Character>(bytes);
+         } else {
+             return env.getBool(false);
+         }
+     }},
+};
 
 struct {
     const char * name_;
@@ -274,17 +293,15 @@ struct {
 
 void runUpdateLoop() {
     ScriptEngine engine;
-    std::for_each(
-        std::begin(functionExports), std::end(functionExports),
-        [&](const BuiltinFunctionInfo& info) {
-            engine.exportFunction(info.name, "engine",
-                                  info.docstring,
-                                  info.requiredArgs,
-                                  (void * (*)())info.impl);
-        });
+    std::for_each(std::begin(functionExports), std::end(functionExports),
+                  [&](const BuiltinFunctionInfo & info) {
+                      engine.exportFunction(info.name, "engine", info.docstring,
+                                            info.requiredArgs,
+                                            (void * (*)())info.impl);
+                  });
     for (const auto & global : globals) {
         engine.setGlobal(global.name_, "engine", global.value_);
     }
     engine.run("ebl/main.ebl");
 }
-}
+} // namespace Game
